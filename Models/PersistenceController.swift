@@ -69,11 +69,8 @@ struct PersistenceController {
                 print("No changes")
             }
         }
-    }
-    
-    static func haptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let impactMed = UIImpactFeedbackGenerator(style: style)
+        
+        let impactMed = UIImpactFeedbackGenerator(style: .medium)
         impactMed.impactOccurred()
     }
-
 }

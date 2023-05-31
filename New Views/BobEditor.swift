@@ -26,13 +26,15 @@ struct BobEditor: View {
 
     @State private var showDelete = false
     
-    @State private var newAttribute = false
+    @State private var newAttributeText = false
+    @State private var newAttributeNum = false
+    @State private var newAttributeBool = false
     @State private var editAttributes = false
     @State private var editAttribute: Attribute? = nil
     
-    @State private var presentImageView = false
     @State private var deleteAttribute = false
     @State private var createEmptyWarning = false
+    @State private var cancelAlert = false
 
     @Environment(\.presentationMode) var presentationMode
     
@@ -40,202 +42,190 @@ struct BobEditor: View {
 
     var body: some View {
         
-        ZStack {
-            
-            ScrollView {
-
-                VStack {
-                    
-                    VStack {
-                        
-                        Text(create ? "New Bob" : "Edit Bob")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                        Text(create ? "Create a new category" : "Edit the \(name) category")
-                            .font(.subheadline)
-                            .foregroundColor(Color(UIColor.systemGray2))
-                            .multilineTextAlignment(.center)
-
-                        ZStack {
-                            
-                            Icon(image: self.image, size: 150, square: true, faded: true)
-                                .padding(.top, 10)
-                            
-                            Button(action: {
-                                PersistenceController.haptic(.medium)
-                                self.presentImageView.toggle()
-                            }) {
+        NavigationStack {
+                
+            Form {
+                
+                Section(header:
+                    HStack {
+                        Spacer()
+                        ImageEditor(image: self.$image) {
+                            ZStack {
+                                Icon(image: self.image, size: 100, faded: true)
                                 Image(systemName: "photo")
                                     .foregroundColor(Color(UIColor.systemGray))
                                     .font(.largeTitle)
                             }
-                            .sheet(isPresented: self.$presentImageView) {
-                                ImageView(image: self.$image)
-                            }
                         }
-                        .padding(.bottom, 10)
+                        .padding(.top, 10)
+                        Spacer()
+                    }
+                ) { }
 
+                Section {
+                    AStack {
+                        Text("Name")
+                        Spacer()
                         TextField("Name", text: self.$name)
-                            .font(.title)
-                            .multilineTextAlignment(.center)
-
+                            .multilineTextAlignment(.trailing)
+                    }
+                    AStack {
+                        Text("Description")
+                        Spacer()
                         TextField("Description", text: self.$desc)
-                            .foregroundColor(Color(UIColor.systemGray))
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
+                            .multilineTextAlignment(.trailing)
                     }
-                    .padding(.top, 20)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-                    
-                    Form {
-                        
-                        Section(header: Text("Bob Type")) {
-                        
-                            Picker("Bob Type", selection: self.$listType) {
-                                Text("List")
-                                    .tag(0)
-                                Text("Checklist")
-                                    .tag(1)
-                                Text("Ranking")
-                                    .tag(2)
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
+                    Picker("Collection Type", selection: self.$listType) {
+                        Text("List")
+                            .tag(0)
+                        Text("Checklist")
+                            .tag(1)
+                        Text("Ranking")
+                            .tag(2)
+                    }
+                    .pickerStyle(.menu)
+                    .accentColor(PersistenceController.themeColor)
+                }
+                
+                Section(header: HStack {
+                    Text("Attributes")
+                        .lineLimit(0)
+                        .font(.callout)
+                    Spacer()
+                    Menu {
+                        Button {
+                            self.newAttributeText.toggle()
+                        } label: {
+                            Text("Text").textCase(nil)
                         }
-                        
-                        Section(header: Text("Attributes")) {
-                            
-                            ZStack {
-                                Text("Attributes")
-                                    .font(.subheadline)
-                                    .fontWeight(.bold)
-                                HStack {
-                                    Button(action: {
-                                        PersistenceController.haptic(.medium)
-                                        self.newAttribute.toggle()
-                                    }) {
-                                        Text("New")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(PersistenceController.themeColor)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    Spacer()
-                                    Button(action: {
-                                        PersistenceController.haptic(.medium)
-                                        self.editAttributes.toggle()
-                                    }) {
-                                        Text(self.editAttributes ? "Done" : "Edit")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(PersistenceController.themeColor)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
-                            }
-                            .padding(.vertical, 10)
-                                
-                            if self.attributes.isEmpty {
-                                Text("Define attributes which each bit can be given a value for. For example, 'Level', 'Gender', 'Type', etc.")
-                                    .multilineTextAlignment(.center)
+                        Button {
+                            self.newAttributeNum.toggle()
+                        } label: {
+                            Text("Number").textCase(nil)
+                        }
+                        Button {
+                            self.newAttributeBool.toggle()
+                        } label: {
+                            Text("Boolean").textCase(nil)
+                        }
+                    } label: {
+                        Text("New")
+                            .font(.callout)
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    if !attributes.isEmpty {
+                        Button(action: {
+                            self.editAttributes.toggle()
+                        }) {
+                            Text(self.editAttributes ? "Done" : "Edit")
+                                .font(.callout)
+                                .foregroundColor(PersistenceController.themeColor)
+                        }
+                        .padding(.leading)
+                    }
+                }) {
+                    ForEach(self.attributes, id: \.self) { attribute in
+                        Button(action: {
+                            self.editAttribute = attribute
+                        }) {
+                            HStack {
+                                Text(attribute.displayName ?? "")
+                                    .foregroundColor(Color(UIColor.label))
+                                Spacer()
+                                Text(getAttributeDescription(attribute))
                                     .font(.caption)
-                                    .foregroundColor(Color(UIColor.systemGray2))
-                                    .padding(15)
+                                    .foregroundColor(.gray)
                             }
-                            
-                            ForEach(self.attributes, id: \.self) { attribute in
-                                Button(action: {
-                                    PersistenceController.haptic(.medium)
-                                    self.editAttribute = attribute
-                                }) {
-                                    NavigationLink(destination: EmptyView()) {
-                                        HStack {
-                                            Text(attribute.displayName ?? "")
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(Color(UIColor.label))
-                                            Spacer()
-                                            Text(getAttributeDescription(attribute))
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                        }
-                                        .padding(.trailing, 5)
-                                    }
-                                }
-                            }
-                            .onMove(perform: moveAttributes)
-                            .onDelete(perform: removeAttributes)
-                        }
-                        
-                        Section(header: Text("Bit List Options")) {
-                            
-                            HStack {
-                                Text("Icons")
-                                Spacer()
-                                Picker("Icons", selection: self.$displayBitImgList) {
-                                    Text("Large")
-                                        .tag(1)
-                                    Text("Small")
-                                        .tag(0)
-                                    Text("None")
-                                        .tag(2)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                            }
-                            
-                            Toggle("Show Description", isOn: self.$displayBitDescList)
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        }
-                        
-                        Section(header: Text("Bit Display Options")) {
-                            
-                            HStack {
-                                Text("Bit Image")
-                                Spacer()
-                                Picker("Bit Image", selection: self.$displayBitIcon) {
-                                    Text("Full Image")
-                                        .tag(false)
-                                    Text("Icon")
-                                        .tag(true)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                            }
+                            .padding(.trailing, 5)
                         }
                     }
-                    .frame(height: self.attributes.isEmpty ? 800 : CGFloat(self.attributes.count) * 50 + 700)
-                    .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
-                    .animation(.default)
-                    .sheet(isPresented: self.$newAttribute) {
-                        AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob)
+                    .onMove(perform: moveAttributes)
+                    .onDelete(perform: removeAttributes)
+                    
+                    if self.attributes.isEmpty {
+                        Text("")
                     }
-                    .sheet(item: self.$editAttribute) { attribute in
-                        AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, create: false)
+                }
+                
+                Section {
+                    
+                    Picker("Item Icon in List", selection: self.$displayBitImgList) {
+                        Text("Large")
+                            .tag(1)
+                        Text("Small")
+                            .tag(0)
+                        Text("None") 
+                            .tag(2)
                     }
+                    .pickerStyle(.menu)
+                    .accentColor(PersistenceController.themeColor)
+                    
+                    Toggle("Item Description in List", isOn: self.$displayBitDescList)
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                    
+                    Picker("Display in Item Page", selection: self.$displayBitIcon) {
+                        Text("Full Image")
+                            .tag(false)
+                        Text("Icon")
+                            .tag(true)
+                    }
+                    .pickerStyle(.menu)
+                    .accentColor(PersistenceController.themeColor)
                 }
             }
-            
-            VStack {
-                
-                Spacer()
-            
-                Button(action: {
-                    PersistenceController.haptic(.medium)
-                    saveBob()
-                }) {
-                    Text("Save")
-                        .font(.headline)
-                        .padding(20)
-                        .foregroundColor(.white)
-                        .background(PersistenceController.themeColor)
-                        .cornerRadius(100)
+            .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
+            .sheet(isPresented: self.$newAttributeText) {
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 0)
+            }
+            .sheet(isPresented: self.$newAttributeNum) {
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 1)
+            }
+            .sheet(isPresented: self.$newAttributeBool) {
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 2)
+            }
+            .sheet(item: self.$editAttribute) { attribute in
+                AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, create: false)
+            }
+            .navigationBarTitle(create ? "New Collection" : "Edit Collection")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        if create && name.isEmpty {
+                            self.presentationMode.wrappedValue.dismiss()
+                        } else {
+                            self.cancelAlert.toggle()
+                        }
+                    }) {
+                        Text("Cancel")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .confirmationDialog("Cancel", isPresented: $cancelAlert) {
+                        Button(create ? "Delete Collection" : "Discard Changes", role: .destructive) {
+                            self.presentationMode.wrappedValue.dismiss()
+                        }
+                        Button(create ? "Save Collection" : "Save Changes") {
+                            saveBob()
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    }
                 }
-                .shadow(color: Color(UIColor.systemGray6), radius: 10)
-                .padding(20)
-                .alert(isPresented: self.$createEmptyWarning) {
-                    Alert(title: Text("Please give the bob a name."))
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        saveBob()
+                    }) {
+                        Text("Save")
+                            .font(.system(.headline, design: .rounded).bold())
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .alert(isPresented: self.$createEmptyWarning) {
+                        Alert(title: Text("Please give the collection a name."))
+                    }
                 }
             }
         }
+        .interactiveDismissDisabled()
         .onAppear {
             if bob != nil {
                 self.create = false

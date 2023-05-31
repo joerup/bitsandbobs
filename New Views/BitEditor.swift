@@ -14,7 +14,7 @@ struct BitEditor: View {
     
     @State var name = ""
     @State var desc = ""
-    @State var paragraph = " "
+    @State var paragraph = ""
     @State var image = UIImage()
     @State var attributes: [String:String] = [:]
     @State var checked = false
@@ -22,8 +22,8 @@ struct BitEditor: View {
     @State private var create = true
 
     @State private var showDelete = false
-    @State private var presentImageView = false
     @State private var createEmptyWarning = false
+    @State private var cancelAlert = false
 
     @Environment(\.presentationMode) var presentationMode
     
@@ -31,142 +31,111 @@ struct BitEditor: View {
 
     var body: some View {
         
-        ZStack {
-
-            ScrollView {
-
-                VStack {
-                    
-                    VStack {
-
-                        Text(create ? "New Bit" : "Edit Bit")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                        Text(create ? "Create a new item in the \(self.bob.name ?? "") category" : "Edit item in the \(self.bob.name ?? "") category")
-                            .font(.subheadline)
-                            .foregroundColor(Color(UIColor.systemGray2))
-                            .multilineTextAlignment(.center)
-                        
+        NavigationStack {
+            
+            Form {
+                
+                Section(header: HStack {
+                    Spacer()
+                    ImageEditor(image: self.$image) {
                         ZStack {
-                            
-                            Icon(image: self.image, size: 150, faded: true)
-                                .padding(.top, 10)
-                            
-                            Button(action: {
-                                PersistenceController.haptic(.medium)
-                                self.presentImageView.toggle()
-                            }) {
-                                Image(systemName: "photo")
-                                    .foregroundColor(Color(UIColor.systemGray))
-                                    .font(.largeTitle)
-                            }
-                            .sheet(isPresented: self.$presentImageView) {
-                                ImageView(image: self.$image)
-                            }
-                        }
-                        .padding(.bottom, 10)
-                        
-                        ZStack {
-                            VStack {
-                                TextField("Name", text: self.$name)
-                                    .font(.title)
-                                    .multilineTextAlignment(.center)
-
-                                TextField("Description", text: self.$desc)
-                                    .foregroundColor(Color(UIColor.systemGray))
-                                    .font(.headline)
-                                    .multilineTextAlignment(.center)
-                            }
-                            HStack {
-                                Spacer()
-                                if self.bob.listType == 1 {
-                                    ZStack {
-                                        Circle()
-                                            .fill(self.checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
-                                            .frame(width: 35, height: 35)
-                                            .animation(.easeInOut)
-                                        Circle()
-                                            .stroke(Color(UIColor.systemGray4))
-                                            .frame(width: 35, height: 35)
-                                        if self.checked {
-                                            Image(systemName: "checkmark")
-                                                .animation(.easeInOut)
-                                        }
-                                    }
-                                    .onTapGesture {
-                                        PersistenceController.haptic(.medium)
-                                        self.checked.toggle()
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-                    .padding(.top, 20)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-                    
-                    Form {
-                        
-                        if !self.bob.attributeList.isEmpty {
-                            
-                            Section(header: Text("Attributes")) {
-                                
-                                ForEach(self.bob.attributeList.indices, id: \.self) { a in
-                                    AttrValueSetter(attributes: self.$attributes, a: a, bob: self.bob)
-                                        .padding(.vertical, 3)
-                                }
-                            }
-                        }
-                        
-                        Section(header: Text("Paragraph")) {
-                        
-                            ZStack {
-                                Text(self.paragraph)
-                                    .padding([.leading, .trailing], 5)
-                                    .padding([.top, .bottom], 15)
-                                    .foregroundColor(Color.clear)
-                                TextEditor(text: self.$paragraph)
-                            }
-                            .padding(2)
+                            Icon(image: self.image, size: 100, faded: true)
+                            Image(systemName: "photo")
+                                .foregroundColor(Color(UIColor.systemGray))
+                                .font(.largeTitle)
                         }
                     }
-                    .frame(height: 350 + 50*CGFloat(self.bob.attributeList.count) + 0.7*CGFloat(self.paragraph.count))
+                    .padding(.top, 10)
+                    Spacer()
+                }) { }
+                
+                Section {
+                    AStack {
+                        Text("Name")
+                        Spacer()
+                        TextField("Name", text: self.$name)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    AStack {
+                        Text("Description")
+                        Spacer()
+                        TextField("Description", text: self.$desc)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    AStack {
+                        Text("Collection")
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Text(self.bob.name ?? "")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
+                if !self.bob.attributeList.isEmpty {
+                    
+                    Section("Attributes") {
+                        
+                        ForEach(self.bob.attributeList.indices, id: \.self) { a in
+                            AttrValueSetter(attributes: self.$attributes, a: a, bob: self.bob)
+                        }
+                    }
+                }
+                
+                Section("Text") {
+                    TextField("Text", text: self.$paragraph, axis: .vertical)
                 }
             }
-            
-            VStack {
-                
-                Spacer()
-            
-                Button(action: {
-                    PersistenceController.haptic(.medium)
-                    saveBit()
-                }) {
-                    Text("Save")
-                        .font(.headline)
-                        .padding(20)
-                        .foregroundColor(.white)
-                        .background(PersistenceController.themeColor)
-                        .cornerRadius(100)
+            .navigationBarTitle(create ? "New Item" : "Edit Item")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        if create && name.isEmpty {
+                            self.presentationMode.wrappedValue.dismiss()
+                        } else {
+                            self.cancelAlert.toggle()
+                        }
+                    }) {
+                        Text("Cancel")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .confirmationDialog("Cancel", isPresented: $cancelAlert) {
+                        Button(create ? "Delete Item" : "Discard Changes", role: .destructive) {
+                            self.presentationMode.wrappedValue.dismiss()
+                        }
+                        Button(create ? "Save Item" : "Save Changes") {
+                            saveBit()
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    }
                 }
-                .shadow(color: Color(UIColor.systemGray6), radius: 10)
-                .padding(20)
-                .alert(isPresented: self.$createEmptyWarning) {
-                    Alert(title: Text("Please give the bit a name."))
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        saveBit()
+                    }) {
+                        Text("Save")
+                            .font(.system(.headline, design: .rounded).bold())
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .alert(isPresented: self.$createEmptyWarning) {
+                        Alert(title: Text("Please give the item a name."))
+                    }
                 }
             }
         }
+        .interactiveDismissDisabled()
         .onAppear {
-            if bit != nil {
+            if let bit {
                 self.create = false
-                self.name = bit!.name ?? ""
-                self.desc = bit!.desc ?? ""
-                self.paragraph = bit!.paragraph ?? ""
-                self.image = bit!.image != nil ? UIImage(data: bit!.image!)! : UIImage()
-                self.attributes = bit!.attributes ?? [:]
-                self.checked = bit!.checked
+                self.name = bit.name ?? ""
+                self.desc = bit.desc ?? ""
+                self.paragraph = bit.paragraph ?? ""
+                self.image = bit.image != nil ? UIImage(data: bit.image!)! : UIImage()
+                self.attributes = bit.attributes ?? [:]
+                self.checked = bit.checked
             }
         }
     }
@@ -230,10 +199,9 @@ struct AttrValueSetter: View {
     
     var body: some View {
         
-        HStack {
+        AStack {
+            
             Text(self.bob.attributeList[a].displayName ?? "")
-                .fontWeight(.bold)
-                .foregroundColor(Color(UIColor.systemGray))
             
             Spacer()
             
@@ -247,7 +215,7 @@ struct AttrValueSetter: View {
                         // Text Display
                         HStack {
                             Spacer()
-                            Text(self.newValue != "" ? self.newValue : self.bob.attributeList[a].name ?? "")
+                            Text(self.newValue != "" ? self.newValue : self.bob.attributeList[a].displayName ?? "")
                                 .foregroundColor(self.newValue == "" ? Color(UIColor.systemGray) : nil)
                                 .lineLimit(0)
                                 .opacity(self.bob.attributeList[a].restrictPresets ? 1 : 0)
@@ -261,7 +229,7 @@ struct AttrValueSetter: View {
                         
                         // Text Editor
                         if !self.bob.attributeList[a].restrictPresets {
-                            TextField(self.bob.attributeList[a].name ?? "", text: self.$newValue)
+                            TextField(self.bob.attributeList[a].displayName ?? "", text: self.$newValue)
                                 .multilineTextAlignment(.trailing)
                                 .onChange(of: self.newValue, perform: { value in
                                     let name = self.bob.attributeList[a].name ?? ""
@@ -285,7 +253,6 @@ struct AttrValueSetter: View {
                             }
                         }
                         .onChange(of: self.newValue, perform: { value in
-                            PersistenceController.haptic(.medium)
                             let name = self.bob.attributeList[a].name ?? ""
                             self.attributes[name] = value
                         })
@@ -450,7 +417,7 @@ struct AttrValueSetter: View {
     }
     
     func getAttributeValues(_ attribute: Int) -> [String] {
-        var presets = self.bob.attributeList[attribute].presets ?? []
+        var presets = self.bob.attributeList[attribute].presets?.filter { !$0.isEmpty } ?? []
         let name = self.bob.attributeList[attribute].name ?? ""
         for bit in bob.bitArray {
             let value = bit.attributes?[name] ?? ""

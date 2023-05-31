@@ -46,6 +46,7 @@ struct AttrEditor: View {
     // States
     @State private var editPresets = false
     @State private var createEmptyWarning = false
+    @State private var cancelAlert = false
     
     @Environment(\.presentationMode) var presentationMode
     
@@ -60,388 +61,280 @@ struct AttrEditor: View {
     
     var body: some View {
         
-        ZStack {
-        
-            ScrollView {
+        NavigationStack {
+            
+            Form {
                 
-                VStack {
-                    
-                    VStack {
-                    
-                        Text(create ? "New Attribute" : "Edit Attribute")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                        Text(create ? "Create a new attribute which each bit can be given a value for" : "Edit the \(displayName) attribute")
-                            .font(.subheadline)
-                            .foregroundColor(Color(UIColor.systemGray2))
-                            .multilineTextAlignment(.center)
-                        
+                Section {
+                    AStack {
+                        Text("Name")
+                        Spacer()
                         if create {
                             TextField("Name", text: self.$name)
-                                .font(.title)
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 10)
+                                .multilineTextAlignment(.trailing)
                         }
                         else {
                             TextField("Name", text: self.$displayName)
-                                .font(.title)
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 10)
+                                .multilineTextAlignment(.trailing)
                         }
                     }
-                    .padding(.top, 20)
-                    .padding(.horizontal, 20)
+                    Picker("Data Type", selection: self.$type) {
+                        Text("Text")
+                            .tag(0)
+                        Text("Number")
+                            .tag(1)
+                        Text("Boolean")
+                            .tag(2)
+                    }
+                    .pickerStyle(.menu)
+                    .accentColor(PersistenceController.themeColor)
+                }
+                
+                if self.type == 0 {
                     
-                    if self.type == 0 {
+                    Section {
+                        
+                        Toggle(isOn: self.$sortable) {
+                            Text("Sortable")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        
+                        Toggle(isOn: self.$groupable) {
+                            Text("Groupable")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        
+                        if self.groupable {
+                            Toggle(isOn: self.$unassignedGroup) {
+                                Text("Include Unassigned Group")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                            .animation(.default, value: groupable)
+                        }
+                        
+                        if self.sortable || self.groupable {
+                            Picker("Sorting Method", selection: self.$sortTextType) {
+                                Text("As Listed")
+                                    .tag(0)
+                                Text("ABC Order")
+                                    .tag(1)
+                            }
+                            .pickerStyle(.menu)
+                            .accentColor(PersistenceController.themeColor)
+                            .animation(.default, value: sortable || groupable)
+                        }
+                    }
                     
-                        Form {
-                            
-                            Section(header: Text("Data Type")) {
-                            
-                                Picker("Type", selection: self.$type) {
-                                    Text("Text")
-                                        .tag(0)
-                                    Text("Number")
-                                        .tag(1)
-                                    Text("Boolean")
-                                        .tag(2)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                            }
-                            
-                            Section(header: Text("Sorting")) {
-                                
-                                Toggle(isOn: self.$sortable) {
-                                    VStack(alignment: .leading) {
-                                        Text("Sortable")
-                                        Text("Bits can be sorted by this attribute")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
-                                    }
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                
-                                Toggle(isOn: self.$groupable) {
-                                    VStack(alignment: .leading) {
-                                        Text("Groupable")
-                                        Text("Bits can be grouped by this attribute")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
-                                    }
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                
-                                if self.sortable || self.groupable {
-                                    HStack {
-                                        Text("Sorting Method")
-                                        Picker("Sorting Method", selection: self.$sortTextType) {
-                                            Text("As Listed")
-                                                .tag(0)
-                                            Text("ABC Order")
-                                                .tag(1)
-                                        }
-                                        .pickerStyle(SegmentedPickerStyle())
-                                    }
-                                }
-                                
-                                if self.groupable {
-                                    Toggle(isOn: self.$unassignedGroup) {
-                                        VStack(alignment: .leading) {
-                                            Text("Include Unassigned Group")
-                                            Text("For bits that are not given a value")
-                                                .foregroundColor(Color(UIColor.systemGray2))
-                                                .font(.caption)
-                                        }
-                                    }
-                                    .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                }
-                            }
-                            
-                            Section(header: Text("Presets")) {
-                                
-                                Toggle(isOn: self.$restrictPresets) {
-                                    VStack(alignment: .leading) {
-                                        Text("Restrict to Presets Only")
-                                        Text("Only presets can be chosen for bit values")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
-                                    }
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                
-                                ZStack {
-                                    Text("Presets")
-                                        .font(.subheadline)
-                                        .fontWeight(.bold)
-                                    HStack {
-                                        Button(action: {
-                                            self.presets += [""]
-                                            PersistenceController.haptic(.medium)
-                                        }) {
-                                            Text("New")
-                                                .font(.subheadline)
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(PersistenceController.themeColor)
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                        Spacer()
-                                        Button(action: {
-                                            PersistenceController.haptic(.medium)
-                                            self.editPresets.toggle()
-                                        }) {
-                                            Text(self.editPresets ? "Done" : "Edit")
-                                                .font(.subheadline)
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(PersistenceController.themeColor)
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                    }
-                                }
-                                .padding(.vertical, 10)
-                                
-                                if self.presets.isEmpty {
-                                    Text("Define possible values for this attribute which bits can choose from.")
-                                        .multilineTextAlignment(.center)
-                                        .font(.caption)
-                                        .foregroundColor(Color(UIColor.systemGray2))
-                                        .padding(15)
-                                }
-                                
-                                ForEach(self.presets.indices, id: \.self) { p in
-                                    Button(action: {
-                                        PersistenceController.haptic(.medium)
-                                    }) {
-                                        TextField("Value", text: Binding(
-                                                    get: { self.presets[p] },
-                                                    set: { self.presets[p] = $0 }))
-                                            .foregroundColor(Color(UIColor.systemGray))
-                                    }
-                                }
-                                .onMove(perform: moveAttributePresets)
-                                .onDelete(perform: removeAttributePresets)
-                            }
+                    Section(header: HStack {
+                        Text("Presets")
+                            .lineLimit(0)
+                            .font(.callout)
+                        Spacer()
+                        Button(action: {
+                            self.presets += [""]
+                        }) {
+                            Text("New")
+                                .font(.callout)
+                                .foregroundColor(PersistenceController.themeColor)
                         }
-                        .frame(height: self.presets.isEmpty ? 700 : CGFloat(self.presets.count) * 50 + 600)
-                        .environment(\.editMode, .constant(self.editPresets ? EditMode.active : EditMode.inactive))
-                        .animation(.default)
-                    }
-                    else if type == 1 {
+                        if !presets.isEmpty {
+                            Button(action: {
+                                self.editPresets.toggle()
+                            }) {
+                                Text(self.editPresets ? "Done" : "Edit")
+                                    .font(.callout)
+                                    .foregroundColor(PersistenceController.themeColor)
+                            }
+                            .padding(.leading)
+                        }
+                    }) {
+                        ForEach(self.presets.indices, id: \.self) { p in
+                            TextField("Value", text: Binding(
+                                get: { self.presets[p] },
+                                set: { self.presets[p] = $0 }))
+                            .foregroundColor(Color.init(white: 0.2))
+                        }
+                        .onMove(perform: moveAttributePresets)
+                        .onDelete(perform: removeAttributePresets)
                         
-                        Form {
-                            
-                            Section(header: Text("Data Type")) {
-                            
-                                Picker("Type", selection: self.$type) {
-                                    Text("Text")
-                                        .tag(0)
-                                    Text("Number")
-                                        .tag(1)
-                                    Text("Boolean")
-                                        .tag(2)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                            }
-                            
-                            Section(header: Text("Restrictions")) {
-                                
-                                Toggle(isOn: self.$decimal) {
-                                    Text("Allow Decimals")
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                .onChange(of: self.decimal) { value in
-                                    self.maxNum = self.maxNum == "" ? "" : value ? String(Double(self.maxNum)!) : String(Int(Double(self.maxNum)!))
-                                    self.minNum = self.minNum == "" ? "" : value ? String(Double(self.minNum)!) : String(Int(Double(self.minNum)!))
-                                }
-                                
-                                HStack {
-                                    Text("Minimum")
-                                    Spacer()
-                                    TextField("No Limit", text: self.$minNum, onCommit: {
-                                        PersistenceController.haptic(.medium)
-                                        // Reject if not a number
-                                        if Double(self.minNum) == nil {
-                                            self.minNum = ""
-                                            self.minIncluded = false
-                                            return
-                                        }
-                                        // Turn to integer if decimals are not allowed
-                                        if !self.decimal && Int(self.minNum) == nil {
-                                            self.minNum = String(Int(Double(self.minNum)!))
-                                        }
-                                    })
-                                    .font(.title3)
-                                    .keyboardType(.numbersAndPunctuation)
-                                    .multilineTextAlignment(.trailing)
-                                    if self.minNum != "" {
-                                        Text(self.minIncluded ? "Inclusive" : "Not inclusive")
-                                            .font(.caption)
-                                            .foregroundColor(Color(UIColor.systemGray3))
-                                            .onTapGesture {
-                                                self.minIncluded.toggle()
-                                            }
-                                    }
-                                }
-                                .animation(.default)
-
-                                HStack {
-                                    Text("Maximum")
-                                    Spacer()
-                                    TextField("No Limit", text: self.$maxNum, onCommit: {
-                                        PersistenceController.haptic(.medium)
-                                        // Reject if not a number
-                                        if Double(self.maxNum) == nil {
-                                            self.maxNum = ""
-                                            self.maxIncluded = false
-                                            return
-                                        }
-                                        // Turn to integer if decimals are not allowed
-                                        if !self.decimal && Int(self.maxNum) == nil {
-                                            self.maxNum = String(Int(Double(self.maxNum)!))
-                                        }
-                                    })
-                                    .font(.title3)
-                                    .keyboardType(.numbersAndPunctuation)
-                                    .multilineTextAlignment(.trailing)
-                                    if self.maxNum != "" {
-                                        Text(self.maxIncluded ? "Inclusive" : "Not inclusive")
-                                            .font(.caption)
-                                            .foregroundColor(Color(UIColor.systemGray3))
-                                            .onTapGesture {
-                                                self.maxIncluded.toggle()
-                                            }
-                                    }
-                                }
-                                .animation(.default)
-                            }
-                            
-                            Section(header: Text("Styling")) {
-
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Prefix")
-                                        Text("Displayed before number, ex. $")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
-                                    }
-                                    Spacer()
-                                    TextField("Prefix", text: self.$prefix)
-                                        .font(.title3)
-                                        .multilineTextAlignment(.trailing)
-                                }
-
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Suffix")
-                                        Text("Displayed after number, ex. units")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
-                                    }
-                                    Spacer()
-                                    TextField("Suffix", text: self.$suffix)
-                                        .font(.title3)
-                                        .multilineTextAlignment(.trailing)
-                                }
-                            }
-                            
-                            if !self.decimal {
-                            
-                                Section(header: Text("Grouping")) {
-                                    
-                                    Toggle(isOn: self.$groupable) {
-                                        VStack(alignment: .leading) {
-                                            Text("Groupable")
-                                            Text("Bits can be grouped by this attribute")
-                                                .foregroundColor(Color(UIColor.systemGray2))
-                                                .font(.caption)
-                                        }
-                                    }
-                                    .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                    
-                                    if self.groupable {
-                                        Toggle(isOn: self.$unassignedGroup) {
-                                            VStack(alignment: .leading) {
-                                                Text("Include Unassigned Group")
-                                                Text("For bits that are not given a value")
-                                                    .foregroundColor(Color(UIColor.systemGray2))
-                                                    .font(.caption)
-                                            }
-                                        }
-                                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                                    }
-                                }
-                            }
+                        if self.presets.isEmpty {
+                            Text("")
                         }
-                        .frame(height: 750)
                     }
-                    else if type == 2 {
-                        
-                        Form {
-                            
-                            Section(header: Text("Data Type")) {
-                            
-                                Picker("Type", selection: self.$type) {
-                                    Text("Text")
-                                        .tag(0)
-                                    Text("Number")
-                                        .tag(1)
-                                    Text("Boolean")
-                                        .tag(2)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
+                    
+                    if !presets.isEmpty {
+                        Section {
+                            Toggle(isOn: self.$restrictPresets) {
+                                Text("Restrict Choices to Presets")
                             }
-                            
-                            Section(header: Text("Display Options")) {
-                            
-                                HStack {
-                                    Text("Wording")
-                                    Picker("Wording", selection: self.$boolType) {
-                                        Text("True/False")
-                                            .tag(0)
-                                        Text("Yes/No")
-                                            .tag(1)
-                                    }
-                                    .pickerStyle(SegmentedPickerStyle())
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        }
+                    }
+                }
+                else if type == 1 {
+                    
+                    Section {
+                        
+                        Toggle(isOn: self.$decimal) {
+                            Text("Allow Decimals")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        .onChange(of: self.decimal) { value in
+                            self.maxNum = self.maxNum == "" ? "" : value ? String(Double(self.maxNum)!) : String(Int(Double(self.maxNum)!))
+                            self.minNum = self.minNum == "" ? "" : value ? String(Double(self.minNum)!) : String(Int(Double(self.minNum)!))
+                        }
+                        
+                        AStack {
+                            Text("Minimum")
+                            Spacer()
+                            TextField("No Limit", text: self.$minNum, onCommit: {
+                                // Reject if not a number
+                                if Double(self.minNum) == nil {
+                                    self.minNum = ""
+                                    self.minIncluded = false
+                                    return
                                 }
-                                
-                                Toggle(isOn: self.$boolDisplayFalse) {
-                                    VStack(alignment: .leading) {
-                                        Text("Display only if True")
-                                        Text("Hide attribute from bit unless true")
-                                            .foregroundColor(Color(UIColor.systemGray2))
-                                            .font(.caption)
+                                // Turn to integer if decimals are not allowed
+                                if !self.decimal && Int(self.minNum) == nil {
+                                    self.minNum = String(Int(Double(self.minNum)!))
+                                }
+                            })
+                            .keyboardType(.numbersAndPunctuation)
+                            .multilineTextAlignment(.trailing)
+                            if self.minNum != "" {
+                                Text(self.minIncluded ? "Inclusive" : "Not inclusive")
+                                    .font(.caption)
+                                    .foregroundColor(Color(UIColor.systemGray3))
+                                    .onTapGesture {
+                                        self.minIncluded.toggle()
                                     }
+                            }
+                        }
+
+                        AStack {
+                            Text("Maximum")
+                            Spacer()
+                            TextField("No Limit", text: self.$maxNum, onCommit: {
+                                // Reject if not a number
+                                if Double(self.maxNum) == nil {
+                                    self.maxNum = ""
+                                    self.maxIncluded = false
+                                    return
+                                }
+                                // Turn to integer if decimals are not allowed
+                                if !self.decimal && Int(self.maxNum) == nil {
+                                    self.maxNum = String(Int(Double(self.maxNum)!))
+                                }
+                            })
+                            .keyboardType(.numbersAndPunctuation)
+                            .multilineTextAlignment(.trailing)
+                            if self.maxNum != "" {
+                                Text(self.maxIncluded ? "Inclusive" : "Not inclusive")
+                                    .font(.caption)
+                                    .foregroundColor(Color(UIColor.systemGray3))
+                                    .onTapGesture {
+                                        self.maxIncluded.toggle()
+                                    }
+                            }
+                        }
+                    }
+                    
+                    Section {
+
+                        AStack {
+                            Text("Prefix")
+                            Spacer()
+                            TextField("Prefix", text: self.$prefix)
+                                .multilineTextAlignment(.trailing)
+                        }
+
+                        AStack {
+                            Text("Suffix")
+                            Spacer()
+                            TextField("Suffix", text: self.$suffix)
+                                .multilineTextAlignment(.trailing)
+                        }
+                    }
+                    
+                    if !self.decimal {
+                    
+                        Section {
+                            
+                            Toggle(isOn: self.$groupable) {
+                                Text("Groupable")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                            
+                            if self.groupable {
+                                Toggle(isOn: self.$unassignedGroup) {
+                                    Text("Include Unassigned Group")
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             }
                         }
-                        .frame(height: 400)
+                    }
+                }
+                else if type == 2 {
+                    
+                    Section {
+                    
+                        Picker("Display Type", selection: self.$boolType) {
+                            Text("True/False")
+                                .tag(0)
+                            Text("Yes/No")
+                                .tag(1)
+                        }
+                        .pickerStyle(.menu)
+                        .accentColor(PersistenceController.themeColor)
+                    
+                        Toggle(isOn: self.$boolDisplayFalse) {
+                            Text("Display only if True")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                 }
             }
-            
-            VStack {
-                
-                Spacer()
-            
-                Button(action: {
-                    PersistenceController.haptic(.medium)
-                    saveAttribute()
-                }) {
-                    Text("Save")
-                        .font(.headline)
-                        .padding(20)
-                        .foregroundColor(.white)
-                        .background(PersistenceController.themeColor)
-                        .cornerRadius(100)
+            .environment(\.editMode, .constant(self.editPresets ? EditMode.active : EditMode.inactive))
+            .navigationBarTitle(create ? "New Attribute" : "Edit Attribute")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        if create && name.isEmpty {
+                            self.presentationMode.wrappedValue.dismiss()
+                        } else {
+                            self.cancelAlert.toggle()
+                        }
+                    }) {
+                        Text("Cancel")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .confirmationDialog("Cancel", isPresented: $cancelAlert) {
+                        Button(create ? "Delete Attribute" : "Discard Changes", role: .destructive) {
+                            self.presentationMode.wrappedValue.dismiss()
+                        }
+                        Button(create ? "Save Attribute" : "Save Changes") {
+                            saveAttribute()
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    }
                 }
-                .shadow(color: Color(UIColor.systemGray6), radius: 10)
-                .padding(20)
-                .alert(isPresented: self.$createEmptyWarning) {
-                    Alert(title: Text("Please give the attribute a name."))
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        saveAttribute()
+                    }) {
+                        Text("Save")
+                            .font(.system(.headline, design: .rounded).bold())
+                            .foregroundColor(PersistenceController.themeColor)
+                    }
+                    .alert(isPresented: self.$createEmptyWarning) {
+                        Alert(title: Text("Please give the attribute a name."))
+                    }
                 }
             }
         }
+        .interactiveDismissDisabled()
         .onAppear {
             if attribute != nil {
                 self.name = attribute!.name ?? ""
@@ -458,6 +351,7 @@ struct AttrEditor: View {
                         }
                     }
                 }
+                self.presets.removeAll(where: { $0 == "" })
                 self.restrictPresets = attribute!.restrictPresets
                 self.sortable = attribute!.sortable
                 self.groupable = attribute!.groupable
@@ -498,8 +392,6 @@ struct AttrEditor: View {
             self.createEmptyWarning.toggle()
             return
         }
-    
-        self.presets.removeAll(where: { $0 == "" })
         
         if create {
             

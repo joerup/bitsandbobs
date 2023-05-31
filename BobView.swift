@@ -6,31 +6,21 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct BobView: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
 
-    @State var bob: Bob
+    var bob: Bob
+    var bits: [Bit] {
+        return bob.bitArray
+    }
     
-    @FetchRequest(
-        entity: Bob.entity(),
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Bob.order, ascending: true)
-        ]
-    ) var bobs: FetchedResults<Bob>
-    
-    @FetchRequest(
-        entity: Bit.entity(),
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Bit.order, ascending: true)
-        ]
-    ) var bits: FetchedResults<Bit>
-    
-    @State var groups: [String] = []
-    @State var bitLists: [String:[Bit]] = [:]
-    @State var groupableAttributes: [Attribute] = []
-    @State var sortableAttributes: [Attribute] = []
+    @State private var groups: [String] = []
+    @State private var bitLists: [String:[Bit]] = [:]
+    @State private var groupableAttributes: [Attribute] = []
+    @State private var sortableAttributes: [Attribute] = []
     
     @State private var topTitle = false
 
@@ -45,11 +35,13 @@ struct BobView: View {
     @State private var sortReversed = false
     @State private var search = ""
     
+    @State private var update = false
+    
     var body: some View {
 
         GeometryReader { geometry in
             
-            ZStack {
+            VStack(spacing: 0) {
 
                 VStack(spacing: 0) {
                     
@@ -57,7 +49,7 @@ struct BobView: View {
                         if bob.image == nil {
                             Rectangle()
                                 .fill(Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2))
-                                .frame(width: geometry.size.width-20, height: UIScreen.main.bounds.height*0.15)
+                                .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
                                 .cornerRadius(20)
                                 .padding(10)
                         }
@@ -66,14 +58,14 @@ struct BobView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .blur(radius: 1)
-                            .frame(width: geometry.size.width-20, height: UIScreen.main.bounds.height*0.15)
-                            .cornerRadius(20)
+                            .frame(height: UIScreen.main.bounds.height*0.15)
+                            .cornerRadius(10)
                             .padding(10)
                         
                         VStack {
                             Text(bob.name ?? "")
-                                .fontWeight(.black)
-                                .font(.largeTitle)
+                                .font(.system(.largeTitle, design: .rounded).weight(.black))
+                                .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                 .tracking(-0.5)
                                 .lineLimit(0)
                                 .minimumScaleFactor(0.2)
@@ -82,8 +74,8 @@ struct BobView: View {
 
                             if bob.desc != nil && bob.desc != "" {
                                 Text(bob.desc ?? "")
-                                    .fontWeight(.black)
-                                    .font(.headline)
+                                    .font(.system(.headline, design: .rounded).weight(.bold))
+                                    .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                     .tracking(-0.25)
                                     .lineLimit(0)
                                     .minimumScaleFactor(0.2)
@@ -91,135 +83,132 @@ struct BobView: View {
                                     .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
                             }
                         }
-                        .frame(width: geometry.size.width-20, height: UIScreen.main.bounds.height*0.15)
-                        .padding(10)
+                        .frame(height: UIScreen.main.bounds.height*0.15)
+                        .padding(.horizontal, 10)
                     }
                     
-                    HStack {
-                        
+                    List {
+                
                         HStack {
+                            HStack {
+                                Image(systemName: "folder\(group != 0 ? ".fill" : "")")
+                                    .fontWeight(.medium)
+                                    .foregroundColor(PersistenceController.themeColor)
+                                    .onTapGesture {
+                                        if group != 0 { group = 0 }
+                                    }
+                                Menu {
+                                    ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
+                                        Button {
+                                            withAnimation {
+                                                self.group = a
+                                            }
+                                        } label: {
+                                            Text(getGroup(a, display: true))
+                                        }
+                                    }
+                                } label: {
+                                    Text(getGroup(group, display: true))
+                                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                                        .font(geometry.size.width > 800 ? .headline : .callout)
+                                        .lineLimit(0)
+                                        .minimumScaleFactor(0.5)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .onChange(of: self.group) { _ in
+                                setGroupAndSort()
+                                saveBob()
+                            }
+                            
+                            HStack {
+                                Spacer(minLength: 0)
+                                Menu {
+                                    ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
+                                        Button {
+                                            withAnimation {
+                                                self.sort = a
+                                            }
+                                        } label: {
+                                            Text(getSort(a, display: true))
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(getSort(sort, display: true))
+                                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                                            .font(geometry.size.width > 800 ? .headline : .callout)
+                                            .lineLimit(0)
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                }
+                                .onChange(of: self.sort) { _ in
+                                    setGroupAndSort()
+                                    saveBob()
+                                }
+                                Button(action: {
+                                    self.sortReversed.toggle()
+                                    setGroupAndSort()
+                                    saveBob()
+                                }) {
+                                    Image(systemName: self.sortReversed ? "arrow.up" : "arrow.down")
+                                        .fontWeight(.medium)
+                                        .foregroundColor(PersistenceController.themeColor)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.bottom, 5)
+                        .listRowSeparator(.hidden)
+                        
+                        HStack(spacing: 0) {
                             Image(systemName: "magnifyingglass")
                                 .imageScale(geometry.size.width > 800 ? .medium : .small)
                                 .foregroundColor(Color(UIColor.systemGray))
                                 .padding(2)
-                            TextField("Search", text: self.$search, onCommit: {
-                                PersistenceController.haptic(.medium)
-                                setGroupAndSort()
-                            })
-                            .foregroundColor(Color(UIColor.systemGray))
-                            .font(geometry.size.width > 800 ? .body : .caption)
+                            TextField("Search", text: self.$search)
+                                .fontWeight(.regular)
+                                .padding(.horizontal, 7)
+                                .onChange(of: self.search) { _ in
+                                    setGroupAndSort()
+                                }
                             Spacer()
                             if !self.search.isEmpty {
-                                Image(systemName: "xmark.circle")
-                                    .imageScale(.small)
+                                Button {
+                                    self.search = ""
+                                    setGroupAndSort()
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .imageScale(.small)
+                                        .foregroundColor(Color(UIColor.systemGray))
+                                        .padding(2)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 5)
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                        .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
+                        .listRowSeparator(.hidden)
+                        
+                        if self.bob.bitArray.isEmpty {
+                            HStack {
+                                Spacer()
+                                Text("This collection is empty.")
+                                    .multilineTextAlignment(.center)
                                     .foregroundColor(Color(UIColor.systemGray))
-                                    .onTapGesture {
-                                        PersistenceController.haptic(.medium)
-                                        self.search = ""
-                                        setGroupAndSort()
-                                    }
+                                    .padding()
+                                Spacer()
                             }
+                            .listRowSeparator(.hidden)
                         }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .background(Color(UIColor.systemGray6))
-                        .cornerRadius(10)
-                        
-                        HStack {
-                            Image(systemName: "folder")
-                                .imageScale(geometry.size.width > 800 ? .medium : .small)
-                                .foregroundColor(Color(UIColor.systemGray))
-                                .padding(2)
-                                .padding(.trailing, -2)
-                            Picker(getGroup(group, display: true), selection: self.$group) {
-                                ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
-                                    Text(getGroup(a, display: true))
-                                        .tag(a)
-                                }
-                            }
-                            .font(geometry.size.width > 800 ? .body : .caption)
-                            .lineLimit(0)
-                            .minimumScaleFactor(0.5)
-                            .pickerStyle(MenuPickerStyle())
-                            .onChange(of: self.group) { _ in
-                                PersistenceController.haptic(.medium)
-                                setGroupAndSort()
-                                saveBob()
-                            }
-                            Spacer()
-                        }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .background(Color(UIColor.systemGray6))
-                        .cornerRadius(10)
-                        
-                        HStack {
-                            Image(systemName: "arrow.up.arrow.down")
-                                .imageScale(geometry.size.width > 800 ? .medium : .small)
-                                .foregroundColor(Color(UIColor.systemGray))
-                                .padding(2)
-                                .padding(.trailing, -2)
-                            Picker(getSort(sort, display: true), selection: self.$sort) {
-                                ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
-                                    Text(getSort(a, display: true))
-                                        .tag(a)
-                                }
-                            }
-                            .font(geometry.size.width > 800 ? .body : .caption)
-                            .lineLimit(0)
-                            .minimumScaleFactor(0.5)
-                            .pickerStyle(MenuPickerStyle())
-                            .onChange(of: self.sort) { _ in
-                                PersistenceController.haptic(.medium)
-                                setGroupAndSort()
-                                saveBob()
-                            }
-                            Spacer()
-                            Button(action: {
-                                PersistenceController.haptic(.medium)
-                                self.sortReversed.toggle()
-                                setGroupAndSort()
-                                saveBob()
-                            }) {
-                                Image(systemName: self.sortReversed ? "chevron.up" : "chevron.down")
-                                    .foregroundColor(PersistenceController.themeColor)
-                                    .imageScale(geometry.size.width > 800 ? .medium : .small)
-                                    .animation(.default)
-                                    .padding(2)
-                                    .padding(.leading, -2)
-                            }
-                        }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .background(Color(UIColor.systemGray6))
-                        .cornerRadius(10)
-                    }
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding(.horizontal, 15)
-                    .padding(.bottom, 7.5)
-                    
-                    if self.bob.bitArray.isEmpty {
-                        HStack {
-                            Spacer()
-                            Text("No bits. Create a new bit in the \(bob.name ?? "") category!")
-                                .multilineTextAlignment(.center)
-                                .font(.caption)
-                                .foregroundColor(Color(UIColor.systemGray2))
-                                .padding(15)
-                            Spacer()
-                        }
-                    }
-                    
-                    List {
                             
                         ForEach(self.groups, id: \.self) { group in
                             
+                            let name = editGroupName(group)
                             Section(header:
-                                Text(editGroupName(group))
-                                    .foregroundColor(Color(UIColor.systemGray))
+                                name != "" ? Text(name) : nil
                             ) {
                                 ForEach(self.bitLists[group]!, id: \.order) { bit in
 
@@ -243,7 +232,7 @@ struct BobView: View {
                                                 Icon(image: UIImage(data: bit.image ?? Data()) ?? UIImage(),
                                                      size: bob.displayBitImgList == 0 ? 30 : 50,
                                                      faded: bob.listType == 1 && !bit.checked)
-                                                    .padding(.vertical, 3)
+                                                    .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
                                                     .padding(.leading, -4)
                                                     .padding(.trailing, 2)
                                             }
@@ -251,7 +240,7 @@ struct BobView: View {
                                             VStack(alignment: .leading) {
 
                                                 Text(bit.name ?? "")
-                                                    .fontWeight(.semibold)
+                                                    .font(.system(.title3, design: .rounded).weight(.semibold))
                                                     .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.label : UIColor.systemGray))
                                                     .tracking(-0.5)
                                                     .font(.title2)
@@ -285,79 +274,28 @@ struct BobView: View {
                                             Spacer()
                                             
                                             if bob.listType == 1 {
-                                                ZStack {
-                                                    Circle()
-                                                        .fill(bit.checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
-                                                        .frame(width: 35, height: 35)
-                                                        .animation(.easeInOut)
-                                                    Circle()
-                                                        .stroke(Color(UIColor.systemGray4))
-                                                        .frame(width: 35, height: 35)
-                                                    if bit.checked {
-                                                        Image(systemName: "checkmark")
-                                                            .animation(.easeInOut)
-                                                    }
-                                                }
-                                                .onTapGesture {
-                                                    PersistenceController.haptic(.medium)
-                                                    let revisedItems: [Bit] = bob.bitArray.map{ $0 }
-                                                    revisedItems[Int(bit.order)].checked.toggle()
-                                                    bob.bits = NSSet(array: revisedItems)
-                                                    PersistenceController.shared.save()
-                                                }
+                                                Check(bob: bob, bit: bit, update: $update)
                                             }
                                         }
                                     }
+                                    .id(update)
                                 }
                                 .onMove(perform: moveBits)
                                 .onDelete(perform: { offsets in
                                     removeBits(offsets: offsets, group: group)
                                 })
                             }
+                            .padding(.horizontal, 5)
+                            .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
                         }
-                        
-                        Section(header: Text("\n\n\n\n")) {}
+                        .listRowSeparator(.hidden)
                     }
-                    .listStyle(InsetGroupedListStyle())
+                    .listStyle(.plain)
                     .environment(\.editMode, .constant(self.editBits ? EditMode.active : EditMode.inactive))
-                    .animation(.default)
-                }
-                
-                VStack(spacing: 0) {
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        PersistenceController.haptic(.heavy)
-                        self.newBit.toggle()
-                    }, label: {
-                        ZStack {
-                            Circle()
-                                .foregroundColor(PersistenceController.themeColor)
-                            Image(systemName: "plus")
-                                .font(.largeTitle)
-                                .foregroundColor(.white)
-                        }
-                        .shadow(color: Color(UIColor.systemGray6), radius: 10)
-                    })
-                    .frame(width: 80, height: 80)
-                    .padding()
-                    .sheet(isPresented: self.$newBit, content: {
-                        BitEditor(bob: bob)
-                    })
-                    .sheet(isPresented: self.$editBob, content: {
-                        BobEditor(bob: bob)
-                    })
-                    .alert(isPresented: self.$moveBitWarning) {
-                        Alert(title: Text("Cannot Move Bit"),
-                              message: Text("You can only move bits \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
-                              )
-                    }
-                    .animation(.default)
                 }
             }
         }
-        .navigationBarTitle("Bob")
+        .navigationBarTitle("\(self.bob.name ?? "")")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -367,16 +305,14 @@ struct BobView: View {
                 if !self.editBits {
                     Menu {
                         Button(action: {
-                            PersistenceController.haptic(.medium)
                             self.editBob.toggle()
                         }) {
-                            Text("Edit \(self.bob.name ?? "") Bob")
+                            Text("Edit Collection")
                         }
                         Button(action: {
-                            PersistenceController.haptic(.medium)
                             self.editBits.toggle()
                         }) {
-                            Text("Edit Bit List")
+                            Text("Edit Item List")
                         }
                     } label: {
                         Text("Edit")
@@ -388,18 +324,24 @@ struct BobView: View {
                     Text("Done")
                         .foregroundColor(PersistenceController.themeColor)
                         .onTapGesture {
-                            PersistenceController.haptic(.medium)
                             self.editBits.toggle()
                         }
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    self.newBit.toggle()
+                }, label: {
+                    Image(systemName: "plus")
+                })
+            }
         }
         .onAppear {
-            PersistenceController.haptic(.medium)
             self.group = Int(bob.group)
             self.sort = Int(bob.sort)
             self.sortReversed = bob.sortReversed
             setGroupAndSort()
+            update.toggle()
         }
         .onChange(of: self.newBit) { value in
             if !value {
@@ -410,6 +352,17 @@ struct BobView: View {
             if !value {
                 setGroupAndSort()
             }
+        }
+        .sheet(isPresented: self.$newBit, content: {
+            BitEditor(bob: bob)
+        })
+        .sheet(isPresented: self.$editBob, content: {
+            BobEditor(bob: bob)
+        })
+        .alert(isPresented: self.$moveBitWarning) {
+            Alert(title: Text("Cannot Move Item"),
+                  message: Text("You can only move items \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
+            )
         }
     }
     

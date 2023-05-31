@@ -17,10 +17,8 @@ struct BitsBobsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            
-            ContentView()
+            ListView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
-
         }
         .onChange(of: scenePhase) { _ in
             persistenceController.save()

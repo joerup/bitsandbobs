@@ -15,15 +15,10 @@ struct BitView: View {
     
     @State var bit: Bit
     var bob: Bob
-    
-    @FetchRequest(
-        entity: Bit.entity(),
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Bit.order, ascending: true)
-        ]
-    ) var bits: FetchedResults<Bit>
 
     @State private var editBit = false
+    
+    @State private var update = false
     
     var body: some View {
 
@@ -40,8 +35,8 @@ struct BitView: View {
                                 Image(uiImage: UIImage(data: bit.image!)!)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: geometry.size.width-20, height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(20)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                    .cornerRadius(10)
                                     .padding(10)
                             }
                             else if bob.image != nil {
@@ -49,8 +44,8 @@ struct BitView: View {
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .blur(radius: 7)
-                                    .frame(width: geometry.size.width-20, height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(20)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                    .cornerRadius(10)
                                     .padding(10)
                             }
                         }
@@ -71,8 +66,7 @@ struct BitView: View {
                                 
                                 if bob.listType == 2 {
                                     Text(String(bit.order+1))
-                                        .fontWeight(.bold)
-                                        .font(.largeTitle)
+                                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
                                         .tracking(-0.5)
                                         .foregroundColor(Color(bit.image == nil ? UIColor.gray : UIColor.white))
                                         .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
@@ -92,8 +86,7 @@ struct BitView: View {
                             
                                 VStack {
                                     Text(bit.name ?? "")
-                                        .fontWeight(.black)
-                                        .font(.largeTitle)
+                                        .font(.system(.largeTitle, design: .rounded).weight(.black))
                                         .tracking(-0.5)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
@@ -102,8 +95,7 @@ struct BitView: View {
 
                                     if bit.desc != nil && bit.desc != "" {
                                         Text(bit.desc ?? "")
-                                            .fontWeight(.black)
-                                            .font(.headline)
+                                            .font(.system(.headline, design: .rounded).weight(.black))
                                             .tracking(-0.25)
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.2)
@@ -115,8 +107,8 @@ struct BitView: View {
                                 Spacer()
                                 
                                 if bob.listType == 1 {
-                                    Check(bob: bob, bit: bit)
-                                        .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
+                                    Check(bob: bob, bit: bit, update: $update)
+                                        .shadow(color: .black, radius: 10)
                                         .padding(10)
                                 }
                                 else if bob.listType == 2 {
@@ -128,16 +120,17 @@ struct BitView: View {
                             }
                             .padding(.bottom, 20)
                         }
-                        .frame(width: geometry.size.width-20, height: bit.image != nil ? UIScreen.main.bounds.height*0.5 : UIScreen.main.bounds.height*0.2)
+                        .frame(width: max(geometry.size.width-20, 1), height: bit.image != nil ? UIScreen.main.bounds.height*0.5 : UIScreen.main.bounds.height*0.2)
                         .padding(10)
                     }
+                    .id(update)
                     
                     if bit.attributes != nil {
                         ForEach(0..<bob.attributeList.count, id: \.self) { a in
                             if bit.attributes![bob.attributeList[a].name ?? ""] != nil &&
                                 bit.attributes![bob.attributeList[a].name ?? ""] != "" &&
                                 !(bob.attributeList[a].type == 2 && bob.attributeList[a].boolDisplayFalse && bit.attributes![bob.attributeList[a].name ?? ""] == "False") {
-                                HStack {
+                                AStack {
                                     Text(bob.attributeList[a].displayName ?? "")
                                         .font(.headline)
                                         .fontWeight(.regular)
@@ -169,7 +162,7 @@ struct BitView: View {
                 })
             }
         }
-        .navigationBarTitle("Bit")
+        .navigationBarTitle("\(self.bit.name ?? "")")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -179,17 +172,13 @@ struct BitView: View {
                 Text("Edit")
                     .foregroundColor(PersistenceController.themeColor)
                     .onTapGesture {
-                        PersistenceController.haptic(.medium)
                         self.editBit.toggle()
                     }
             }
         }
-        .onAppear {
-            PersistenceController.haptic(.medium)
-        }
         .onChange(of: self.editBit) { value in
             if !value {
-                let newBits = self.bits.filter { $0.bob == self.bob }
+                let newBits = self.bob.bitArray
                 let bit = newBits[Int(bit.order)]
                 self.bit = bit
             }

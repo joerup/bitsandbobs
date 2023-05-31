@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Bits &amp; Bobs would like to access the camera so you can display one of your photos in a bit or bob.</string>
+	<string>Bits &amp; Bobs would like to access the camera.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
