@@ -108,7 +108,7 @@ struct BitView: View {
                                 
                                 if bob.listType == 1 {
                                     Check(bob: bob, bit: bit, update: $update)
-                                        .shadow(color: .black, radius: 10)
+                                        .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
                                         .padding(10)
                                 }
                                 else if bob.listType == 2 {

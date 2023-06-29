@@ -228,11 +228,16 @@ struct BobView: View {
                                                 .padding(.leading, -6)
                                                 .padding(.trailing, 2)
                                             }
-                                            
-                                            let image = UIImage(data: bit.icon ?? Data()) ?? UIImage()
 
-                                            if bob.displayBitImgList != 2 {
+                                            if bob.displayBitImgList != 2, let icon = bit.icon, let image = UIImage(data: icon) {
                                                 Icon(image: image,
+                                                     size: bob.displayBitImgList == 0 ? 30 : 50,
+                                                     faded: bob.listType == 1 && !bit.checked)
+                                                    .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
+                                                    .padding(.leading, -4)
+                                                    .padding(.trailing, 2)
+                                            } else {
+                                                Icon(image: nil,
                                                      size: bob.displayBitImgList == 0 ? 30 : 50,
                                                      faded: bob.listType == 1 && !bit.checked)
                                                     .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
@@ -278,13 +283,6 @@ struct BobView: View {
                                             
                                             if bob.listType == 1 {
                                                 Check(bob: bob, bit: bit, update: $update)
-                                            }
-                                            VStack {
-                                                if let size = image.fileSize {
-                                                    Text(String(format: "%.2f MB", Double(size)/pow(1024, 2)))
-                                                } else {
-                                                    Text("Error")
-                                                }
                                             }
                                         }
                                     }
@@ -357,7 +355,6 @@ struct BobView: View {
             self.group = Int(bob.group)
             self.sort = Int(bob.sort)
             self.sortReversed = bob.sortReversed
-            createBitIcons()
             setGroupAndSort()
             update.toggle()
         }
@@ -382,18 +379,6 @@ struct BobView: View {
                   message: Text("You can only move items \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
             )
         }
-    }
-    
-    // Create bit icons
-    func createBitIcons() {
-        managedObjectContext.performAndWait {
-            for bit in bob.bitArray {
-                if let image = bit.image, bit.icon == nil {
-                    bit.icon = image.compressed()
-                }
-            }
-        }
-        PersistenceController.shared.save()
     }
     
     // Set group and sort
