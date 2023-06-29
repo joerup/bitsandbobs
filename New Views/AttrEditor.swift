@@ -18,9 +18,11 @@ struct AttrEditor: View {
     
     var create: Bool = true
     
-    @State var name = ""
-    @State var displayName = ""
-    @State var type = 0
+    @State var name: String = ""
+    @State var displayName: String = ""
+    @State var type: Int = 0
+    @State var allowMultiple: Bool = false
+    @State var maxCount: String = ""
     
     // Text
     @State var presets: [String] = []
@@ -43,7 +45,6 @@ struct AttrEditor: View {
     @State var boolType: Int = 0
     @State var boolDisplayFalse = false
     
-    // States
     @State private var editPresets = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
@@ -78,6 +79,7 @@ struct AttrEditor: View {
                                 .multilineTextAlignment(.trailing)
                         }
                     }
+                    
                     Picker("Data Type", selection: self.$type) {
                         Text("Text")
                             .tag(0)
@@ -85,19 +87,107 @@ struct AttrEditor: View {
                             .tag(1)
                         Text("Boolean")
                             .tag(2)
+//                        Text("Date")
+//                            .tag(3)
                     }
                     .pickerStyle(.menu)
                     .accentColor(PersistenceController.themeColor)
                 }
                 
-                if self.type == 0 {
+                if self.type != 2 {
                     
                     Section {
                         
-                        Toggle(isOn: self.$sortable) {
-                            Text("Sortable")
+                        Toggle(isOn: self.$allowMultiple) {
+                            Text("Multiple Values")
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        
+                        if self.allowMultiple {
+                            AStack {
+                                Text("Maximum Count")
+                                Spacer()
+                                TextField("No Limit", text: self.$maxCount, onCommit: {
+                                    // Reject if less than 2 or not a number
+                                    if Int(self.maxCount) == nil || Int(self.maxCount)! < 2 {
+                                        self.maxCount = ""
+                                        return
+                                    }
+                                    // Turn to integer if decimal
+                                    if Int(self.maxCount) == nil {
+                                        self.maxCount = String(Int(Double(self.maxCount)!))
+                                    }
+                                })
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                            }
+                            .animation(.default, value: allowMultiple)
+                        }
+                    } footer: {
+                        if allowMultiple {
+                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "unlimited values" : "up to \(maxCount) values")) set for this attribute.")
+                        }
+                    }
+                }
+                
+                if self.type == 0 {
+                    
+                    Section(header: HStack {
+                        Text("Presets")
+                            .lineLimit(0)
+                            .font(.callout)
+                        Spacer()
+                        if !presets.isEmpty {
+                            Button(action: {
+                                self.editPresets.toggle()
+                            }) {
+                                Text(self.editPresets ? "Done" : "Edit")
+                                    .font(.callout)
+                                    .foregroundColor(PersistenceController.themeColor)
+                            }
+                            .padding(.leading)
+                        }
+                    }, footer: Text(restrictPresets ? "Values must be chosen from this list." : "Values may be chosen from this list, or others may be entered.")) {
+                        ForEach(self.presets.indices, id: \.self) { p in
+                            TextField("Value", text: Binding(
+                                get: { self.presets[p] },
+                                set: { self.presets[p] = $0 }))
+                            .foregroundColor(Color(UIColor.label))
+                        }
+                        .onMove(perform: moveAttributePresets)
+                        .onDelete(perform: removeAttributePresets)
+                    }
+                    .onAppear {
+                        if presets.last != "" {
+                            self.presets += [""]
+                        }
+                    }
+                    .onChange(of: presets) { presets in
+                        if presets.last != "" {
+                            self.presets += [""]
+                        }
+                        while self.presets.count >= 2 && self.presets[self.presets.count-2].isEmpty && self.presets[self.presets.count-1].isEmpty {
+                            self.presets.removeLast()
+                        }
+                    }
+                    
+                    if !presets.isEmpty || restrictPresets {
+                        Section {
+                            Toggle(isOn: self.$restrictPresets) {
+                                Text("Restrict Choices to Presets")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        }
+                    }
+                    
+                    Section {
+                        
+                        if !self.allowMultiple {
+                            Toggle(isOn: self.$sortable) {
+                                Text("Sortable")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        }
                         
                         Toggle(isOn: self.$groupable) {
                             Text("Groupable")
@@ -122,52 +212,6 @@ struct AttrEditor: View {
                             .pickerStyle(.menu)
                             .accentColor(PersistenceController.themeColor)
                             .animation(.default, value: sortable || groupable)
-                        }
-                    }
-                    
-                    Section(header: HStack {
-                        Text("Presets")
-                            .lineLimit(0)
-                            .font(.callout)
-                        Spacer()
-                        Button(action: {
-                            self.presets += [""]
-                        }) {
-                            Text("New")
-                                .font(.callout)
-                                .foregroundColor(PersistenceController.themeColor)
-                        }
-                        if !presets.isEmpty {
-                            Button(action: {
-                                self.editPresets.toggle()
-                            }) {
-                                Text(self.editPresets ? "Done" : "Edit")
-                                    .font(.callout)
-                                    .foregroundColor(PersistenceController.themeColor)
-                            }
-                            .padding(.leading)
-                        }
-                    }) {
-                        ForEach(self.presets.indices, id: \.self) { p in
-                            TextField("Value", text: Binding(
-                                get: { self.presets[p] },
-                                set: { self.presets[p] = $0 }))
-                            .foregroundColor(Color.init(white: 0.2))
-                        }
-                        .onMove(perform: moveAttributePresets)
-                        .onDelete(perform: removeAttributePresets)
-                        
-                        if self.presets.isEmpty {
-                            Text("")
-                        }
-                    }
-                    
-                    if !presets.isEmpty {
-                        Section {
-                            Toggle(isOn: self.$restrictPresets) {
-                                Text("Restrict Choices to Presets")
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         }
                     }
                 }
@@ -237,6 +281,8 @@ struct AttrEditor: View {
                                     }
                             }
                         }
+                    } footer: {
+                        Text("Values \(maxNum == "" && minNum == "" ? (decimal ? "can be any number" : "can be any integer") : "must be \(decimal ? "" : "integers ")")\(maxNum != "" && minNum != "" ? "between \(minNum) and \(maxNum)" : "")\(maxNum != "" && minNum == "" ? "less than\(maxIncluded ? " or equal to" : "") \(maxNum)" : "")\(minNum != "" && maxNum == "" ? "greater than\(minIncluded ? " or equal to" : "") \(minNum)" : "").")
                     }
                     
                     Section {
@@ -246,6 +292,7 @@ struct AttrEditor: View {
                             Spacer()
                             TextField("Prefix", text: self.$prefix)
                                 .multilineTextAlignment(.trailing)
+                                .autocapitalization(.none)
                         }
 
                         AStack {
@@ -253,6 +300,7 @@ struct AttrEditor: View {
                             Spacer()
                             TextField("Suffix", text: self.$suffix)
                                 .multilineTextAlignment(.trailing)
+                                .autocapitalization(.none)
                         }
                     }
                     
@@ -326,7 +374,7 @@ struct AttrEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(PersistenceController.themeColor)
+                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the attribute a name."))
@@ -340,14 +388,17 @@ struct AttrEditor: View {
                 self.name = attribute!.name ?? ""
                 self.displayName = attribute!.displayName ?? attribute!.name ?? ""
                 self.type = Int(attribute!.type)
+                self.allowMultiple = attribute!.allowMultiple
+                self.maxCount = attribute!.maxCount == 0 ? "" : String(attribute!.maxCount)
                 
                 // Text
                 self.presets = attribute!.presets ?? []
                 if bob != nil {
                     for bit in bob!.bitArray {
-                        let value = bit.attributes?[attribute!.name ?? ""] ?? ""
-                        if !self.presets.contains(value) && value != "" {
-                            self.presets += [value]
+                        for value in bit.allAttributeValues(attribute!.name) {
+                            if !self.presets.contains(value) && value != "" {
+                                self.presets += [value]
+                            }
                         }
                     }
                 }
@@ -393,6 +444,10 @@ struct AttrEditor: View {
             return
         }
         
+        if !(self.maxCount == "" || Double(self.maxCount) != nil) { self.maxCount = "" }
+        if !(self.minNum == "" || Double(self.minNum) != nil) { self.minNum = "" }
+        if !(self.maxNum == "" || Double(self.maxNum) != nil) { self.maxNum = "" }
+        
         if create {
             
             let attribute = Attribute(context: managedObjectContext)
@@ -403,6 +458,8 @@ struct AttrEditor: View {
             attribute.name = self.name
             attribute.displayName = self.displayName != "" ? self.displayName : self.name
             attribute.type = Int16(self.type)
+            attribute.allowMultiple = self.allowMultiple
+            attribute.maxCount = Int16(self.maxCount) ?? 0
             
             // Text
             attribute.presets = self.presets
@@ -433,6 +490,8 @@ struct AttrEditor: View {
                 attribute!.name = self.name
                 attribute!.displayName = self.displayName != "" ? self.displayName : self.name
                 attribute!.type = Int16(self.type)
+                attribute!.allowMultiple = self.allowMultiple
+                attribute!.maxCount = Int16(self.maxCount) ?? 0
                 
                 // Text
                 attribute!.presets = self.presets

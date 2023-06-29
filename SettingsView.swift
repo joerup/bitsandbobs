@@ -26,24 +26,24 @@ struct SettingsView: View {
                 
                 List {
                     
-//                    Section {
-//
-//                        Button(action: {
-//                            getSampleBobs()
-//                        }) {
-//                            NavigationLink(destination: EmptyView()) {
-//                                HStack {
-//                                    Image(systemName: "arrow.3.trianglepath")
-//                                        .imageScale(.small)
-//                                        .foregroundColor(PersistenceController.themeColor)
-//                                    Text("Generate Sample Bobs")
-//                                        .font(.headline)
-//                                        .foregroundColor(Color(UIColor.systemGray))
-//                                    Spacer()
-//                                }
-//                            }
-//                        }
-//                    }
+                    Section {
+
+                        Button(action: {
+                            getSampleBobs()
+                        }) {
+                            NavigationLink(destination: EmptyView()) {
+                                HStack {
+                                    Image(systemName: "arrow.3.trianglepath")
+                                        .imageScale(.small)
+                                        .foregroundColor(PersistenceController.themeColor)
+                                    Text("Generate Sample Bobs")
+                                        .font(.headline)
+                                        .foregroundColor(Color(UIColor.systemGray))
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
                     
                     Section {
                         

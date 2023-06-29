@@ -186,6 +186,13 @@ struct BitView: View {
     }
     
     func editAttributeValue(_ value: String, attribute: Attribute) -> String {
+        
+        // Return a series if there are multiple values
+        if value.contains(Constants.delimiter) {
+            let values = value.split(separator: Constants.delimiter).filter({ !$0.isEmpty }).map({ editAttributeValue(String($0), attribute: attribute) })
+            return values.count == 1 ? values.first! : values.joined(separator: ", ")
+        }
+        
         if attribute.type == 0 {
             return value
         }
@@ -207,6 +214,14 @@ struct BitView: View {
             }
             else if attribute.boolType == 1 {
                 return value == "True" ? "Yes" : "No"
+            }
+        }
+        else if attribute.type == 3 {
+            if let date = ISO8601DateFormatter().date(from: value) {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                formatter.timeStyle = .none
+                return formatter.string(from: date)
             }
         }
         return ""

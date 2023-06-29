@@ -20,6 +20,8 @@ extension Attribute {
     @NSManaged public var name: String?
     @NSManaged public var displayName: String?
     @NSManaged public var type: Int16
+    @NSManaged public var allowMultiple: Bool
+    @NSManaged public var maxCount: Int16
     @NSManaged public var bob: Bob?
     
     // Text

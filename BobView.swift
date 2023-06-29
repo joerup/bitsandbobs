@@ -207,10 +207,11 @@ struct BobView: View {
                         ForEach(self.groups, id: \.self) { group in
                             
                             let name = editGroupName(group)
+                            let bits = self.bitLists[group]!
                             Section(header:
                                 name != "" ? Text(name) : nil
                             ) {
-                                ForEach(self.bitLists[group]!, id: \.order) { bit in
+                                ForEach(bits, id: \.order) { bit in
 
                                     NavigationLink(destination: BitView(bit: bit, bob: bob)) {
 
@@ -227,9 +228,11 @@ struct BobView: View {
                                                 .padding(.leading, -6)
                                                 .padding(.trailing, 2)
                                             }
+                                            
+                                            let image = UIImage(data: bit.icon ?? Data()) ?? UIImage()
 
                                             if bob.displayBitImgList != 2 {
-                                                Icon(image: UIImage(data: bit.image ?? Data()) ?? UIImage(),
+                                                Icon(image: image,
                                                      size: bob.displayBitImgList == 0 ? 30 : 50,
                                                      faded: bob.listType == 1 && !bit.checked)
                                                     .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
@@ -276,6 +279,13 @@ struct BobView: View {
                                             if bob.listType == 1 {
                                                 Check(bob: bob, bit: bit, update: $update)
                                             }
+                                            VStack {
+                                                if let size = image.fileSize {
+                                                    Text(String(format: "%.2f MB", Double(size)/pow(1024, 2)))
+                                                } else {
+                                                    Text("Error")
+                                                }
+                                            }
                                         }
                                     }
                                     .id(update)
@@ -287,6 +297,13 @@ struct BobView: View {
                             }
                             .padding(.horizontal, 5)
                             .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
+                            
+                            if bits.count > 0 {
+                                Text(bob.listType == 1 ? "\(bits.filter({ $0.checked }).count) of \(bits.count) item\(bits.count == 1 ? "" : "s")" : "\(bits.count) item\(bits.count == 1 ? "" : "s")")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundColor(Color(UIColor.systemGray2))
+                                    .padding(.horizontal, 5)
+                            }
                         }
                         .listRowSeparator(.hidden)
                     }
@@ -340,6 +357,7 @@ struct BobView: View {
             self.group = Int(bob.group)
             self.sort = Int(bob.sort)
             self.sortReversed = bob.sortReversed
+            createBitIcons()
             setGroupAndSort()
             update.toggle()
         }
@@ -364,6 +382,18 @@ struct BobView: View {
                   message: Text("You can only move items \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
             )
         }
+    }
+    
+    // Create bit icons
+    func createBitIcons() {
+        managedObjectContext.performAndWait {
+            for bit in bob.bitArray {
+                if let image = bit.image, bit.icon == nil {
+                    bit.icon = image.compressed()
+                }
+            }
+        }
+        PersistenceController.shared.save()
     }
     
     // Set group and sort
@@ -430,15 +460,18 @@ struct BobView: View {
                 var unassigned = false
                 for bit in filteredBits {
                     autoreleasepool {
-                        let value = bit.attributes?[attribute!.name ?? ""] ?? ""
-                        if !presets.contains(value) && value != "" {
-                            presets += [value]
-                        }
-                        else if bit.attributes?[attribute!.name ?? ""] == nil || bit.attributes?[attribute!.name ?? ""] == "" {
-                            unassigned = true
+                        for value in bit.allAttributeValues(attribute!.name) {
+                            if !presets.contains(value) && value != "" {
+                                presets += [value]
+                            }
+                            else if value == "" {
+                                unassigned = true
+                            }
                         }
                     }
                 }
+                // Remove empty presets
+                presets = presets.filter { !$0.isEmpty }
                 // Group by preset order
                 if attribute!.sortTextType == 0 {
                     if attribute!.unassignedGroup && unassigned {
@@ -461,12 +494,13 @@ struct BobView: View {
                 var unassigned = false
                 for bit in filteredBits {
                     autoreleasepool {
-                        let value = bit.attributes?[attribute!.name ?? ""] ?? ""
-                        if !values.contains(value) && value != "" {
-                            values += [value]
-                        }
-                        else if value == "" {
-                            unassigned = true
+                        for value in bit.allAttributeValues(attribute!.name) {
+                            if !values.contains(value) && value != "" {
+                                values += [value]
+                            }
+                            else if value == "" {
+                                unassigned = true
+                            }
                         }
                     }
                 }
@@ -489,7 +523,7 @@ struct BobView: View {
     func getSortable() -> [Attribute] {
         var sortable: [Attribute] = []
         for attribute in self.bob.attributeList {
-            if (attribute.type == 0 && attribute.sortable) || attribute.type == 1 {
+            if (attribute.type == 0 && attribute.sortable) || attribute.type == 1, !attribute.allowMultiple {
                 sortable += [attribute]
             }
         }
@@ -525,7 +559,7 @@ struct BobView: View {
             let attribute = getGroup(self.group)
             for bit in filteredBits {
                 autoreleasepool {
-                    if bit.attributes![attribute] == group || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "Unassigned") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
+                    if bit.allAttributeValues(attribute).contains(group) || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "Unassigned") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
                         bitArray += [bit]
                     }
                 }

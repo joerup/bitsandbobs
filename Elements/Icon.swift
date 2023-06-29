@@ -28,4 +28,3 @@ struct Icon: View {
             .opacity(!faded ? 1 : 0.3)
     }
 }
-

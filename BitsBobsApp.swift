@@ -24,6 +24,15 @@ struct BitsBobsApp: App {
             persistenceController.save()
         }
     }
+    
+//    private func updateVersion() {
+//        let modelVersion = UserDefaults.standard.integer(forKey: "modelVersion")
+//        print(modelVersion)
+//        if modelVersion < 1 {
+//            
+//        }
+//        UserDefaults.standard.set(2, forKey: "modelVersion")
+//    }
 }
 
 class AppDelegate: UIResponder, UIApplicationDelegate {

@@ -21,12 +21,16 @@ extension Bit {
     @NSManaged public var name: String?
     @NSManaged public var desc: String?
     @NSManaged public var image: Data?
+    @NSManaged public var icon: Data?
     @NSManaged public var paragraph: String?
     @NSManaged public var attributes: [String:String]?
     @NSManaged public var checked: Bool
     
     @NSManaged public var bob: Bob?
-
+    
+    func allAttributeValues(_ name: String?) -> [String] {
+        return (attributes?[name ?? ""] ?? "")?.components(separatedBy: CharacterSet(charactersIn: String(Constants.delimiter))) ?? []
+    }
 }
 
 extension Bit : Identifiable {
