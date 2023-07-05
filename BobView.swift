@@ -64,7 +64,7 @@ struct BobView: View {
                         
                         VStack {
                             Text(bob.name ?? "")
-                                .font(.system(.largeTitle, design: .rounded).weight(.black))
+                                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                 .tracking(-0.5)
                                 .lineLimit(0)
@@ -74,7 +74,7 @@ struct BobView: View {
 
                             if bob.desc != nil && bob.desc != "" {
                                 Text(bob.desc ?? "")
-                                    .font(.system(.headline, design: .rounded).weight(.bold))
+                                    .font(.system(.headline, design: .rounded).weight(.heavy))
                                     .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                     .tracking(-0.25)
                                     .lineLimit(0)
@@ -110,7 +110,7 @@ struct BobView: View {
                                 } label: {
                                     Text(getGroup(group, display: true))
                                         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                                        .font(geometry.size.width > 800 ? .headline : .callout)
+                                        .font(.system(geometry.size.width > 800 ? .headline : .callout, design: .rounded, weight: .medium))
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.5)
                                 }
@@ -137,7 +137,7 @@ struct BobView: View {
                                     HStack {
                                         Text(getSort(sort, display: true))
                                             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                                            .font(geometry.size.width > 800 ? .headline : .callout)
+                                            .font(.system(geometry.size.width > 800 ? .headline : .callout, design: .rounded, weight: .medium))
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.5)
                                     }
@@ -208,8 +208,18 @@ struct BobView: View {
                             
                             let name = editGroupName(group)
                             let bits = self.bitLists[group]!
-                            Section(header:
-                                name != "" ? Text(name) : nil
+
+                            Section(header: name.isEmpty ? nil :
+                                HStack(alignment: .bottom) {
+                                    Text(name)
+                                        .font(.system(.headline, design: .rounded, weight: .semibold))
+                                    Spacer()
+                                    if bits.count > 0 {
+                                        Text(bitCountText(bits: bits))
+                                            .font(.system(.footnote, design: .rounded, weight: .medium))
+                                            .foregroundColor(Color(UIColor.systemGray2))
+                                    }
+                                }
                             ) {
                                 ForEach(bits, id: \.order) { bit in
 
@@ -220,35 +230,35 @@ struct BobView: View {
                                             if bob.listType == 2 {
                                                 VStack {
                                                     Text(String(bit.order+1))
-                                                        .font(.headline)
+                                                        .font(.system(bit.order < 9 ? .title3 : .headline, design: .rounded).weight(.semibold))
                                                         .fontWeight(.bold)
                                                         .foregroundColor(Color(UIColor.systemGray))
+                                                        .minimumScaleFactor(0.5)
                                                 }
                                                 .frame(width: 30, height: 30, alignment: .center)
                                                 .padding(.leading, -6)
-                                                .padding(.trailing, 2)
                                             }
 
-                                            if bob.displayBitImgList != 2, let icon = bit.icon, let image = UIImage(data: icon) {
-                                                Icon(image: image,
-                                                     size: bob.displayBitImgList == 0 ? 30 : 50,
-                                                     faded: bob.listType == 1 && !bit.checked)
-                                                    .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
+                                            if bob.displayBitImgList != 2 {
+                                                if let icon = bit.icon, let image = UIImage(data: icon) {
+                                                    Icon(image: image,
+                                                         size: bob.displayBitImgList == 0 ? 32 : 50,
+                                                         faded: bob.listType == 1 && !bit.checked)
                                                     .padding(.leading, -4)
                                                     .padding(.trailing, 2)
-                                            } else {
-                                                Icon(image: nil,
-                                                     size: bob.displayBitImgList == 0 ? 30 : 50,
-                                                     faded: bob.listType == 1 && !bit.checked)
-                                                    .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
+                                                } else {
+                                                    Icon(image: nil,
+                                                         size: bob.displayBitImgList == 0 ? 32 : 50,
+                                                         faded: bob.listType == 1 && !bit.checked)
                                                     .padding(.leading, -4)
                                                     .padding(.trailing, 2)
+                                                }
                                             }
 
                                             VStack(alignment: .leading) {
 
                                                 Text(bit.name ?? "")
-                                                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                                                    .font(.system(.title3, design: .rounded).weight(.bold))
                                                     .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.label : UIColor.systemGray))
                                                     .tracking(-0.5)
                                                     .font(.title2)
@@ -259,14 +269,14 @@ struct BobView: View {
                                                         Text(editAttributeNumber(bit.attributes![getSort(sort)]!, attribute: getSortAttribute(sort)))
                                                             .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
                                                             .tracking(-0.25)
-                                                            .font(.subheadline)
+                                                            .font(.system(.subheadline, design: .rounded, weight: .medium))
                                                             .lineLimit(0)
                                                     }
                                                     else if bit.attributes![getSort(sort)] != nil && bit.attributes![getSort(sort)] != "" {
                                                         Text(bit.attributes![getSort(sort)]!)
                                                             .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
                                                             .tracking(-0.25)
-                                                            .font(.subheadline)
+                                                            .font(.system(.subheadline, design: .rounded, weight: .medium))
                                                             .lineLimit(0)
                                                     }
                                                 }
@@ -274,7 +284,7 @@ struct BobView: View {
                                                     Text(bit.desc!)
                                                         .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
                                                         .tracking(-0.25)
-                                                        .font(.subheadline)
+                                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
                                                         .lineLimit(0)
                                                 }
                                             }
@@ -295,15 +305,20 @@ struct BobView: View {
                             }
                             .padding(.horizontal, 5)
                             .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
-                            
-                            if bits.count > 0 {
-                                Text(bob.listType == 1 ? "\(bits.filter({ $0.checked }).count) of \(bits.count) item\(bits.count == 1 ? "" : "s")" : "\(bits.count) item\(bits.count == 1 ? "" : "s")")
-                                    .font(.footnote.weight(.semibold))
-                                    .foregroundColor(Color(UIColor.systemGray2))
-                                    .padding(.horizontal, 5)
-                            }
                         }
                         .listRowSeparator(.hidden)
+                        
+                        if !bits.isEmpty {
+                            HStack {
+                                Spacer()
+                                Text("\(bitCountText(bits: bits)) total")
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(Color(UIColor.systemGray2))
+                                Spacer()
+                            }
+                            .padding()
+                            .listRowSeparator(.hidden)
+                        }
                     }
                     .listStyle(.plain)
                     .environment(\.editMode, .constant(self.editBits ? EditMode.active : EditMode.inactive))
@@ -722,5 +737,12 @@ struct BobView: View {
         }
         
         PersistenceController.shared.save()
+    }
+    
+    // MARK: Display
+    
+    func bitCountText(bits: [Bit]) -> String {
+        bob.listType == 1 ? "\(bits.filter({ $0.checked }).count) of \(bits.count)" : "\(bits.count)"
+//        bob.listType == 1 ? "\(bits.filter({ $0.checked }).count) of \(bits.count) item\(bits.count == 1 ? "" : "s")" : "\(bits.count) item\(bits.count == 1 ? "" : "s")"
     }
 }

@@ -22,7 +22,7 @@ struct Icon: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } else {
-                Color.gray
+                Color(uiColor: .quaternarySystemFill)
             }
         }
         .frame(width: self.size, height: self.size)

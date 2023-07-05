@@ -18,14 +18,19 @@ struct Check: View {
         ZStack {
             Circle()
                 .fill(self.bit.checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
-                .frame(width: 35, height: 35)
+                .frame(width: 32, height: 32)
             Circle()
-                .stroke(Color(UIColor.systemGray4))
-                .frame(width: 35, height: 35)
+                .stroke(Color(uiColor: .systemGray4))
+                .frame(width: 32, height: 32)
             if self.bit.checked {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 14, weight: .black))
                     .foregroundColor(.white)
+                    .animation(.easeInOut, value: bit.checked)
+            } else {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundColor(Color(uiColor: .systemGray4))
                     .animation(.easeInOut, value: bit.checked)
             }
         }

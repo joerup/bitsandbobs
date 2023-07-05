@@ -66,7 +66,7 @@ struct BitView: View {
                                 
                                 if bob.listType == 2 {
                                     Text(String(bit.order+1))
-                                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                         .tracking(-0.5)
                                         .foregroundColor(Color(bit.image == nil ? UIColor.gray : UIColor.white))
                                         .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
@@ -86,7 +86,7 @@ struct BitView: View {
                             
                                 VStack {
                                     Text(bit.name ?? "")
-                                        .font(.system(.largeTitle, design: .rounded).weight(.black))
+                                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                         .tracking(-0.5)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
@@ -95,7 +95,7 @@ struct BitView: View {
 
                                     if bit.desc != nil && bit.desc != "" {
                                         Text(bit.desc ?? "")
-                                            .font(.system(.headline, design: .rounded).weight(.black))
+                                            .font(.system(.headline, design: .rounded).weight(.heavy))
                                             .tracking(-0.25)
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.2)
@@ -132,13 +132,11 @@ struct BitView: View {
                                 !(bob.attributeList[a].type == 2 && bob.attributeList[a].boolDisplayFalse && bit.attributes![bob.attributeList[a].name ?? ""] == "False") {
                                 AStack {
                                     Text(bob.attributeList[a].displayName ?? "")
-                                        .font(.headline)
-                                        .fontWeight(.regular)
+                                        .font(.system(.headline, design: .rounded).weight(.semibold))
                                         .foregroundColor(Color(UIColor.systemGray))
                                     Spacer()
                                     Text(editAttributeValue(bit.attributes![bob.attributeList[a].name ?? ""] ?? "", attribute: bob.attributeList[a]))
-                                        .font(.headline)
-                                        .fontWeight(.regular)
+                                        .font(.system(.headline, design: .rounded).weight(.medium))
                                         .multilineTextAlignment(.trailing)
                                 }
                                 .padding(.horizontal, 20)

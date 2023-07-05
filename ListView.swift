@@ -66,7 +66,7 @@ struct ListView: View {
 
                                         VStack {
                                             Text(bob.name ?? "")
-                                                .font(.system(.largeTitle, design: .rounded).weight(.black))
+                                                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                                 .tracking(-0.5)
                                                 .lineLimit(0)
@@ -76,7 +76,7 @@ struct ListView: View {
 
                                             if bob.desc != nil && bob.desc != "" {
                                                 Text(bob.desc ?? "")
-                                                    .font(.system(.headline, design: .rounded).weight(.bold))
+                                                    .font(.system(.headline, design: .rounded).weight(.heavy))
                                                     .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                                     .tracking(-0.25)
                                                     .lineLimit(0)

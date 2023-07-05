@@ -105,9 +105,9 @@ struct AttrEditor: View {
                         
                         if self.allowMultiple {
                             AStack {
-                                Text("Maximum Count")
+                                Text("Count")
                                 Spacer()
-                                TextField("No Limit", text: self.$maxCount, onCommit: {
+                                TextField("Any", text: self.$maxCount, onCommit: {
                                     // Reject if less than 2 or not a number
                                     if Int(self.maxCount) == nil || Int(self.maxCount)! < 2 {
                                         self.maxCount = ""
@@ -125,7 +125,7 @@ struct AttrEditor: View {
                         }
                     } footer: {
                         if allowMultiple {
-                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "unlimited values" : "up to \(maxCount) values")) set for this attribute.")
+                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "any number of values" : "up to \(maxCount) values")) set for this attribute.")
                         }
                     }
                 }
