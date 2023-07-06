@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WrappingHStack
 
 struct BitEditor: View {
     
@@ -16,6 +17,7 @@ struct BitEditor: View {
     @State var desc = ""
     @State var paragraph = ""
     @State var image = UIImage()
+    @State var tags: [String] = []
     @State var attributes: [String:String] = [:]
     @State var checked = false
     
@@ -24,6 +26,8 @@ struct BitEditor: View {
     @State private var showDelete = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
+    @State private var editTags = false
+    @FocusState private var keyboardFocused: Bool
 
     @Environment(\.presentationMode) var presentationMode
     
@@ -73,9 +77,95 @@ struct BitEditor: View {
                     }
                 }
                 
+                Section(header: Text("Tags").font(.callout)) {
+                    WrappingHStack(0...self.tags.count, id: \.self) { t in
+                        ZStack(alignment: .topTrailing) {
+                            ZStack {
+                                Text("Tag").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
+                                Text(t < tags.count ? tags[t] : "").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
+                                    .overlay {
+                                        if t == tags.count {
+                                            ZStack {
+                                                Button {
+                                                    self.tags += [""]
+                                                } label: {
+                                                    Image(systemName: "plus")
+                                                        .font(.callout.weight(.semibold))
+                                                        .foregroundColor(PersistenceController.themeColor)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                        } else if t == tags.count-1 {
+                                            TextField("Tag", text: Binding(
+                                                get: { self.tags[t] },
+                                                set: { self.tags[t] = $0 }))
+                                            .font(.system(.headline, design: .rounded).weight(.semibold))
+                                            .focused($keyboardFocused)
+                                            .onAppear {
+                                                guard tags[t].isEmpty else { return }
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                    keyboardFocused = true
+                                                }
+                                            }
+                                        } else {
+                                            TextField("Tag", text: Binding(
+                                                get: { self.tags[t] },
+                                                set: { self.tags[t] = $0 }))
+                                            .font(.system(.headline, design: .rounded).weight(.semibold))
+                                        }
+                                    }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(uiColor: .systemGray6)))
+                            .padding(.vertical, 5)
+                            
+                            if t < tags.count {
+                                Button {
+                                    self.tags.remove(at: t)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(Color(uiColor: .systemGray3))
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.trailing, -5)
+                            }
+                        }
+                    }
+                            
+                    
+                    let allTags = self.bob.tagList.filter({ !tags.contains($0) })
+                    if !allTags.isEmpty {
+                        WrappingHStack(allTags, id: \.self) { tag in
+                            ZStack(alignment: .topTrailing) {
+                                
+                                Text(tag)
+                                    .foregroundColor(.gray)
+                                    .font(.system(.headline, design: .rounded).weight(.semibold))
+                                    .padding(10)
+                                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(uiColor: .systemGray6).opacity(0.7)))
+                                    .padding(.vertical, 5)
+                                
+                                Button {
+                                    self.tags.append(tag)
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(PersistenceController.themeColor)
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.trailing, -5)
+                            }
+                        }
+                    }
+                }
+                .onChange(of: tags) { tags in
+                    while self.tags.count >= 2 && self.tags[self.tags.count-2].isEmpty && self.tags[self.tags.count-1].isEmpty {
+                        self.tags.removeLast()
+                    }
+                }
+                
                 if !self.bob.attributeList.isEmpty {
                     
-                    Section(header: Text("Attributes")) {
+                    Section(header: Text("Attributes").font(.callout)) {
                         
                         ForEach(self.bob.attributeList.indices, id: \.self) { a in
                             let attribute = self.bob.attributeList[a]
@@ -93,7 +183,7 @@ struct BitEditor: View {
                     }
                 }
                 
-                Section(header: Text("Text")) {
+                Section(header: Text("Text").font(.callout)) {
                     TextField("Text", text: self.$paragraph, axis: .vertical)
                 }
             }
@@ -144,8 +234,12 @@ struct BitEditor: View {
                 self.desc = bit.desc ?? ""
                 self.paragraph = bit.paragraph ?? ""
                 self.image = bit.image != nil ? UIImage(data: bit.image!)! : UIImage()
+                self.tags = bit.tags ?? []
                 self.attributes = bit.attributes ?? [:]
                 self.checked = bit.checked
+                if paragraph.filter({ $0 != " " }).isEmpty {
+                    paragraph = ""
+                }
             }
         }
     }
@@ -156,6 +250,8 @@ struct BitEditor: View {
             self.createEmptyWarning.toggle()
             return
         }
+        
+        tags = tags.filter { !$0.isEmpty }
         
         if create {
             
@@ -170,6 +266,7 @@ struct BitEditor: View {
             bit.image = self.image.jpegData(compressionQuality: 0.75)
             bit.icon = bit.image?.compressed()
             bit.bob = self.bob
+            bit.tags = self.tags
             bit.attributes = self.attributes
             bit.checked = self.checked
             
@@ -183,6 +280,7 @@ struct BitEditor: View {
                 bit!.paragraph = self.paragraph
                 bit!.image = self.image.jpegData(compressionQuality: 0.75)
                 bit!.icon = bit!.image?.compressed()
+                bit!.tags = self.tags
                 bit!.attributes = self.attributes
                 bit!.checked = self.checked
             }

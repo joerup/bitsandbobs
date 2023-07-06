@@ -8,6 +8,7 @@
 import SwiftUI
 import Foundation
 import CoreData
+import WrappingHStack
 
 struct BitView: View {
     
@@ -125,6 +126,18 @@ struct BitView: View {
                     }
                     .id(update)
                     
+                    if let tags = bit.tags, !tags.isEmpty {
+                        WrappingHStack(tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.system(.headline, design: .rounded).weight(.semibold))
+                                .padding(10)
+                                .background(RoundedRectangle(cornerRadius: 15).fill(Color(uiColor: .systemGray6)))
+                                .padding(.vertical, 5)
+                        }
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 5)
+                    }
+                    
                     if bit.attributes != nil {
                         ForEach(0..<bob.attributeList.count, id: \.self) { a in
                             if bit.attributes![bob.attributeList[a].name ?? ""] != nil &&
@@ -183,7 +196,7 @@ struct BitView: View {
         }
     }
     
-    func editAttributeValue(_ value: String, attribute: Attribute) -> String {
+    private func editAttributeValue(_ value: String, attribute: Attribute) -> String {
         
         // Return a series if there are multiple values
         if value.contains(Constants.delimiter) {

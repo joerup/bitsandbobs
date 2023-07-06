@@ -23,6 +23,7 @@ extension Bit {
     @NSManaged public var image: Data?
     @NSManaged public var icon: Data?
     @NSManaged public var paragraph: String?
+    @NSManaged public var tags: [String]?
     @NSManaged public var attributes: [String:String]?
     @NSManaged public var checked: Bool
     

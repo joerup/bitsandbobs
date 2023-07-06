@@ -16,9 +16,6 @@ struct BobEditor: View {
     @State var image = UIImage()
     @State var attributes: [Attribute] = []
     @State var listType: Int = 0
-    @State var displayBitIcon = false
-    @State var displayBitImgList: Int = 0
-    @State var displayBitDescList = true
     
     @State var create = true
     
@@ -156,35 +153,6 @@ struct BobEditor: View {
                         }
                     }
                 }
-                
-                Section(header: Text("List Settings").font(.callout)) {
-                    
-                    Picker("Icon Size", selection: self.$displayBitImgList) {
-                        Text("Large")
-                            .tag(1)
-                        Text("Small")
-                            .tag(0)
-                        Text("None")
-                            .tag(2)
-                    }
-                    .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
-                    
-                    Toggle("Show Descriptions", isOn: self.$displayBitDescList)
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                }
-                
-                Section(header: Text("Item Settings").font(.callout)) {
-                    
-                    Picker("Image Type", selection: self.$displayBitIcon) {
-                        Text("Full Image")
-                            .tag(false)
-                        Text("Icon")
-                            .tag(true)
-                    }
-                    .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
-                }
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
             .sheet(isPresented: self.$newAttributeText) {
@@ -251,9 +219,6 @@ struct BobEditor: View {
                 self.attributes = bob!.attributeList
                 self.nextAttrID = bob!.nextAttrID
                 self.listType = Int(bob!.listType)
-                self.displayBitIcon = bob!.displayBitIcon
-                self.displayBitImgList = Int(bob!.displayBitImgList)
-                self.displayBitDescList = bob!.displayBitDescList
             }
         }
     }
@@ -319,9 +284,6 @@ struct BobEditor: View {
             bob.attributes = NSSet(array: self.attributes)
             bob.nextAttrID = self.nextAttrID
             bob.listType = Int16(self.listType)
-            bob.displayBitIcon = self.displayBitIcon
-            bob.displayBitImgList = Int16(self.displayBitImgList)
-            bob.displayBitDescList = self.displayBitDescList
             
         }
         else if bob != nil {
@@ -333,9 +295,6 @@ struct BobEditor: View {
                 bob!.attributes = NSSet(array: self.attributes)
                 bob!.nextAttrID = self.nextAttrID
                 bob!.listType = Int16(self.listType)
-                bob!.displayBitIcon = self.displayBitIcon
-                bob!.displayBitImgList = Int16(self.displayBitImgList)
-                bob!.displayBitDescList = self.displayBitDescList
             }
         }
         
