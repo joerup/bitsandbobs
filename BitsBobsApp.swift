@@ -17,7 +17,7 @@ struct BitsBobsApp: App {
     var body: some Scene {
         WindowGroup {
             VStack {
-                ListView()
+                BobList()
             }
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
             .onAppear {

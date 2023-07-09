@@ -183,7 +183,7 @@ struct BitEditor: View {
                     }
                 }
                 
-                Section(header: Text("Text").font(.callout)) {
+                Section(header: Text("Text").font(.callout), footer: Spacer().frame(height: 100)) {
                     TextField("Text", text: self.$paragraph, axis: .vertical)
                 }
             }

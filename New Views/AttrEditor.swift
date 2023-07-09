@@ -125,7 +125,7 @@ struct AttrEditor: View {
                         }
                     } footer: {
                         if allowMultiple {
-                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "any number of values" : "up to \(maxCount) values")) set for this attribute.")
+                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "any number of values" : "\(maxCount) values")) set for this attribute.")
                         }
                     }
                 }
@@ -203,7 +203,7 @@ struct AttrEditor: View {
                         }
                         
                         if self.sortable || self.groupable {
-                            Picker("Sorting Method", selection: self.$sortTextType) {
+                            Picker("Default Order", selection: self.$sortTextType) {
                                 Text("As Listed")
                                     .tag(0)
                                 Text("ABC Order")
@@ -302,6 +302,8 @@ struct AttrEditor: View {
                                 .multilineTextAlignment(.trailing)
                                 .autocapitalization(.none)
                         }
+                    } footer: {
+                        Text("Titles, units, currency symbols, etc.")
                     }
                     
                     if !self.decimal {

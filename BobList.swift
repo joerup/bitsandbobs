@@ -1,5 +1,5 @@
 //
-//  ListView.swift
+//  BobList.swift
 //  Bits & Bobs
 //
 //  Created by Joe Rupertus on 2/21/21.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ListView: View {
+struct BobList: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
     
