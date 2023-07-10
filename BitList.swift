@@ -33,8 +33,6 @@ struct BitList: View {
     
     var setGroupAndSort: () -> Void
     
-    @Binding var editBits: Bool
-    
     @Binding var update: Bool
     
     @State private var moveBitWarning = false
@@ -70,7 +68,7 @@ struct BitList: View {
                         
                         ForEach(self.groups, id: \.self) { group in
                             
-                            let name = editGroupName(group)
+                            let name = BitList.editValueName(group, attribute: groupAttribute)
                             let bits = self.bitLists[group] ?? []
                             
                             Section(header: name.isEmpty ? nil :
@@ -124,18 +122,6 @@ struct BitList: View {
                 .padding(.horizontal, 5)
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(10)
-                .contextMenu {
-                    Button {
-                        self.editBits.toggle()
-                    } label: {
-                        Label("Reorder", systemImage: "arrow.forward")
-                    }
-                    Button {
-                        removeBit(bit: bit)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
             }
         }
     }
@@ -180,7 +166,7 @@ struct BitList: View {
 
                 if self.sort >= 2 && bit.attributes != nil && display == .largeList {
                     if sortAttribute?.type == 1 && bit.attributes![sortName] != nil && bit.attributes![sortName] != "" {
-                        Text(editAttributeNumber(bit.attributes![sortName]!, attribute: sortAttribute))
+                        Text(BitList.editAttributeNumber(bit.attributes![sortName]!, attribute: sortAttribute))
                             .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
                             .tracking(-0.25)
                             .font(.system(.subheadline, design: .rounded, weight: .medium))
@@ -297,25 +283,24 @@ struct BitList: View {
         return bitCountText(bits: displayedBits) + " item\(displayedBits.count == 1 ? "" : "s")"
     }
     
-    private func editGroupName(_ name: String) -> String {
-        if groupAttribute?.type == 1 && Double(name) != nil {
-            return editAttributeNumber(name, attribute: groupAttribute)
+    static func editValueName(_ value: String, attribute: Attribute?) -> String {
+        if attribute?.type == 1 && Double(value) != nil {
+            return editAttributeNumber(value, attribute: attribute)
         }
-        else if groupAttribute?.type == 2 && groupAttribute?.boolType == 1 {
-            switch name {
+        else if attribute?.type == 2 && attribute?.boolType == 1 {
+            switch value {
             case "True":
                 return "Yes"
             case "False":
                 return "No"
             default:
-                return name
+                return value
             }
         }
-        
-        return name
+        return value
     }
     
-    private func editAttributeNumber(_ value: String, attribute: Attribute?) -> String {
+    static func editAttributeNumber(_ value: String, attribute: Attribute?) -> String {
         guard attribute != nil else { return value }
         if attribute!.prefix != nil && attribute!.suffix != nil && attribute!.prefix != "" && attribute!.suffix != "" {
             return attribute!.prefix! + " " + value + " " + attribute!.suffix!

@@ -27,100 +27,37 @@ struct SettingsView: View {
                 List {
                     
                     Section {
-
                         Button(action: {
                             getSampleBobs()
                         }) {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "arrow.3.trianglepath")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Generate Sample Bobs")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Generate Sample Collections")
                         }
                     }
                     
                     Section {
-                        
                         Link(destination: URL(string: "https://www.bitsandbobs.app")!) {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "cursorarrow")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Visit our Website")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Website")
                         }
-                        
                         Link(destination: URL(string: "https://www.bitsandbobs.app/support")!) {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "paperplane")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Contact Support")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Support")
                         }
-
                         Link(destination: URL(string: "https://www.bitsandbobs.app/privacy")!) {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "hand.raised")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Privacy Policy")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Privacy Policy")
                         }
-                        
+                    }
+                    
+                    Section {
                         Button {
                             guard let writeReviewURL = URL(string: "https://apps.apple.com/app/id1554786457?action=write-review")
                                 else { fatalError("Expected a valid URL") }
                             UIApplication.shared.open(writeReviewURL, options: [:], completionHandler: nil)
                         } label: {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "star")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Rate the App")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Rate the App")
                         }
-                        
                         Button {
                             self.presentShare.toggle()
                         } label: {
-                            NavigationLink(destination: EmptyView()) {
-                                HStack {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .imageScale(.small)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                    Text("Share the App")
-                                        .font(.headline)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                }
-                            }
+                            row("Share the App")
                         }
                         .sheet(isPresented: self.$presentShare, content: {
                             ActivityViewController(activityItems: [URL(string: "https://apps.apple.com/us/app/bits-and-bobs/id1554786457")!])
@@ -130,8 +67,8 @@ struct SettingsView: View {
                     Section {
                         HStack {
                             Text("Version")
-                                .font(.headline)
-                                .foregroundColor(Color(UIColor.systemGray))
+                                .font(.headline.weight(.medium))
+                                .foregroundColor(.secondary)
                             Spacer()
                             Text(appVersion ?? "")
                         }
@@ -156,7 +93,18 @@ struct SettingsView: View {
         }
     }
     
-    func getSampleBobs() {
+    private func row(_ text: String) -> some View {
+        NavigationLink(destination: EmptyView()) {
+            HStack {
+                Text(text)
+                    .font(.headline.weight(.medium))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+        }
+    }
+                    
+    private func getSampleBobs() {
         
         let managedObjectContext = PersistenceController.shared.container.viewContext
         

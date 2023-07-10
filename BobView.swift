@@ -153,7 +153,7 @@ struct BobView: View {
                                     .padding(.horizontal, 10)
                                     .padding(5)
                             }
-                            HStack(spacing: 15) {
+                            HStack(spacing: 20) {
                                 if bob.listType == 1 {
                                     HStack(spacing: 5) {
                                         Button {
@@ -164,7 +164,7 @@ struct BobView: View {
                                             }
                                         } label: {
                                             Image(systemName: "checkmark")
-                                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                 .foregroundColor((checkedOnly ?? false) ? .white : .primary)
                                                 .padding(10)
                                                 .background(RoundedRectangle(cornerRadius: 15).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
@@ -177,7 +177,7 @@ struct BobView: View {
                                             }
                                         } label: {
                                             Image(systemName: "xmark")
-                                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                 .foregroundColor(!(checkedOnly ?? true) ? .white : .primary)
                                                 .padding(10)
                                                 .background(RoundedRectangle(cornerRadius: 15).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
@@ -195,7 +195,7 @@ struct BobView: View {
                                                 }
                                             } label: {
                                                 Text(tag)
-                                                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                     .foregroundColor(tags.contains(tag) ? .white : .primary)
                                                     .padding(10)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
@@ -216,7 +216,7 @@ struct BobView: View {
                                             } label: {
                                                 let filterActive = attributeFilters.contains(where: { $0.attribute == filter.attribute && $0.value == filter.value })
                                                 Text(attributeValueText(attribute: attribute, value: value))
-                                                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                     .foregroundColor(filterActive ? .white : .primary)
                                                     .padding(10)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
@@ -264,8 +264,19 @@ struct BobView: View {
                                         .tag(a)
                                 }
                             }
+                            Section {
+                                Picker("", selection: self.$sortReversed) {
+                                    Label("Forward", systemImage: "arrow.down")
+                                        .tag(false)
+                                    Label("Reverse", systemImage: "arrow.up")
+                                        .tag(true)
+                                }
+                                .onTapGesture {
+                                    sortReversed.toggle()
+                                }
+                            }
                         } label: {
-                            circle(icon: "arrow.up.arrow.down", active: sort != 0)
+                            circle(icon: "arrow.up.arrow.down", active: sort != 0 || sortReversed)
                         }
                         
                         Spacer()
@@ -276,7 +287,7 @@ struct BobView: View {
                                 setGroupAndSort()
                             }
                         } label: {
-                            circle(icon: "line.3.horizontal.decrease.circle", active: showTags)
+                            circle(icon: "line.3.horizontal.decrease", active: showTags)
                         }
                         
                         Button {
@@ -296,6 +307,10 @@ struct BobView: View {
                         saveBob()
                     }
                     .onChange(of: self.sort) { _ in
+                        setGroupAndSort()
+                        saveBob()
+                    }
+                    .onChange(of: self.sortReversed) { _ in
                         setGroupAndSort()
                         saveBob()
                     }
@@ -327,10 +342,8 @@ struct BobView: View {
                         sortName: getSort(sort),
                         sortAttribute: getSortAttribute(sort),
                         setGroupAndSort: setGroupAndSort,
-                        editBits: $editBits,
                         update: $update
                     )
-                    .environment(\.editMode, .constant(self.editBits ? EditMode.active : EditMode.inactive))
                 }
             }
         }
@@ -341,21 +354,21 @@ struct BobView: View {
                 Text("")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !self.editBits {
+                Menu {
                     Button {
                         self.editBob.toggle()
                     } label: {
-                        Text("Edit")
-                            .foregroundColor(PersistenceController.themeColor)
-                            .minimumScaleFactor(0.5)
+                        Text("Edit Collection")
                     }
-                }
-                else {
-                    Text("Done")
+                    Button {
+                        self.editBits.toggle()
+                    } label: {
+                        Text("Edit Items")
+                    }
+                } label: {
+                    Text("Edit")
                         .foregroundColor(PersistenceController.themeColor)
-                        .onTapGesture {
-                            self.editBits.toggle()
-                        }
+                        .minimumScaleFactor(0.5)
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -380,12 +393,15 @@ struct BobView: View {
                 setGroupAndSort()
             }
         }
-        .sheet(isPresented: self.$newBit, content: {
+        .sheet(isPresented: self.$newBit) {
             BitEditor(bob: bob)
-        })
-        .sheet(isPresented: self.$editBob, content: {
+        }
+        .sheet(isPresented: self.$editBob) {
             BobEditor(bob: bob)
-        })
+        }
+        .sheet(isPresented: self.$editBits, onDismiss: { setGroupAndSort(); update.toggle() }) {
+            BitListEditor(bob: bob)
+        }
     }
     
     // Set group and sort
@@ -642,6 +658,7 @@ struct BobView: View {
     }
     
     private func attributeValueText(attribute: Attribute, value: String) -> String {
+        let value = BitList.editValueName(value, attribute: attribute)
         switch attribute.type {
         case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : "\(attribute.name ?? ""): \(value)"
         default: return value

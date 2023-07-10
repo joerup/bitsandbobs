@@ -93,6 +93,7 @@ struct BitEditor: View {
                                                     Image(systemName: "plus")
                                                         .font(.callout.weight(.semibold))
                                                         .foregroundColor(PersistenceController.themeColor)
+                                                        .padding(10)
                                                 }
                                                 .buttonStyle(.plain)
                                             } else {
@@ -115,6 +116,7 @@ struct BitEditor: View {
                                                     Image(systemName: "plus")
                                                         .font(.callout.weight(.semibold))
                                                         .foregroundColor(PersistenceController.themeColor)
+                                                        .padding(10)
                                                 }
                                                 .buttonStyle(.plain)
                                             }

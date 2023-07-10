@@ -31,17 +31,17 @@ struct BitView: View {
                     
                     ZStack {
                         
-                        if bit.image != nil {
+                        if let imageData = bit.image, let image = UIImage(data: imageData) {
                             if !bob.displayBitIcon {
-                                Image(uiImage: UIImage(data: bit.image!)!)
+                                Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(10)
                                     .padding(10)
                             }
-                            else if bob.image != nil {
-                                Image(uiImage: UIImage(data: bob.image!)!)
+                            else if let imageData = bob.image, let image = UIImage(data: imageData) {
+                                Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .blur(radius: 7)
@@ -49,6 +49,12 @@ struct BitView: View {
                                     .cornerRadius(10)
                                     .padding(10)
                             }
+                            else {
+                                Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2).cornerRadius(10).padding(10)
+                            }
+                        }
+                        else {
+                            Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2).cornerRadius(10).padding(10)
                         }
                         
                         VStack {
@@ -58,7 +64,7 @@ struct BitView: View {
                                 Spacer()
                                 
                                 Icon(image: UIImage(data: bit.image!)!, size: UIScreen.main.bounds.height*0.35)
-                                    .shadow(color: .black, radius: 10)
+                                    .shadow(color: .black, radius: 20)
                             }
                             
                             Spacer()
@@ -70,15 +76,15 @@ struct BitView: View {
                                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                         .tracking(-0.5)
                                         .foregroundColor(Color(bit.image == nil ? UIColor.gray : UIColor.white))
-                                        .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
-                                        .frame(width: 35, height: 35)
+                                        .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
+                                        .frame(width: 32, height: 32)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.5)
                                         .padding(10)
                                 }
                                 else if bob.listType == 1 {
                                     Circle()
-                                        .frame(width: 35, height: 35)
+                                        .frame(width: 32, height: 32)
                                         .opacity(0)
                                         .padding(10)
                                 }
@@ -92,7 +98,7 @@ struct BitView: View {
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
                                         .foregroundColor(bit.image != nil ? Color(UIColor.white) : Color(UIColor.label))
-                                        .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
+                                        .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
 
                                     if bit.desc != nil && bit.desc != "" {
                                         Text(bit.desc ?? "")
@@ -101,7 +107,7 @@ struct BitView: View {
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.2)
                                             .foregroundColor(Color(bit.image != nil ? UIColor.white : UIColor.systemGray))
-                                            .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
+                                            .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
                                     }
                                 }
                                 
@@ -109,12 +115,11 @@ struct BitView: View {
                                 
                                 if bob.listType == 1 {
                                     Check(bob: bob, bit: bit, update: $update)
-                                        .shadow(color: .black, radius: bit.image != nil ? 10 : 0)
                                         .padding(10)
                                 }
                                 else if bob.listType == 2 {
                                     Circle()
-                                        .frame(width: 35, height: 35)
+                                        .frame(width: 32, height: 32)
                                         .opacity(0)
                                         .padding(10)
                                 }
