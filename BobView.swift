@@ -30,6 +30,7 @@ struct BobView: View {
     @State private var sort = 0
     @State private var tags: [String] = []
     @State private var sortReversed = false
+    @State private var showTags = false
     @State private var showSearch = false
     @State private var search = ""
     @FocusState private var keyboardFocused: Bool
@@ -87,7 +88,6 @@ struct BobView: View {
                     }
                     
                     if showSearch {
-                        
                         HStack(spacing: 0) {
                             Image(systemName: "magnifyingglass")
                                 .fontWeight(.bold)
@@ -131,10 +131,40 @@ struct BobView: View {
                         .padding(.bottom, 5)
                         .padding(.horizontal, 10)
                         .transition(.opacity)
-                        .onChange(of: self.search) { search in
-                            setGroupAndSort()
+                    }
+                    
+                    if showTags {
+                        ScrollView(.horizontal) {
+                            if bob.tagList.isEmpty {
+                                Text("No tags")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 10)
+                                    .padding(5)
+                            }
+                            HStack(spacing: 5) {
+                                ForEach(bob.tagList, id: \.self) { tag in
+                                    Button {
+                                        if let index = tags.firstIndex(of: tag) {
+                                            self.tags.remove(at: index)
+                                        } else {
+                                            self.tags.append(tag)
+                                        }
+                                    } label: {
+                                        Text(tag)
+                                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                                            .foregroundColor(tags.contains(tag) ? .white : .init(white: 0.2))
+                                            .padding(10)
+                                            .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 10)
                         }
-                        
+                        .scrollIndicators(.hidden)
+                        .padding(.vertical, 2)
+                        .padding(.bottom, 5)
+                        .transition(.opacity)
                     }
                     
                     HStack {
@@ -151,13 +181,10 @@ struct BobView: View {
                         }
                         
                         Menu {
-                            ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
-                                Button {
-                                    withAnimation {
-                                        self.group = a
-                                    }
-                                } label: {
+                            Picker("", selection: self.$group) {
+                                ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
                                     Text(getGroup(a, display: true))
+                                        .tag(a)
                                 }
                             }
                         } label: {
@@ -165,13 +192,10 @@ struct BobView: View {
                         }
                         
                         Menu {
-                            ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
-                                Button {
-                                    withAnimation {
-                                        self.sort = a
-                                    }
-                                } label: {
+                            Picker("", selection: self.$sort) {
+                                ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
                                     Text(getSort(a, display: true))
+                                        .tag(a)
                                 }
                             }
                         } label: {
@@ -180,38 +204,19 @@ struct BobView: View {
                         
                         Spacer()
                         
-                        Menu {
-                            Section {
-                                Button {
-                                    self.tags = []
-                                } label: {
-                                    Text("None")
-                                }
-                            }
-                            ForEach(bob.tagList, id: \.self) { tag in
-                                Button {
-                                    withAnimation {
-                                        if let index = tags.firstIndex(of: tag) {
-                                            self.tags.remove(at: index)
-                                        } else {
-                                            self.tags.append(tag)
-                                        }
-                                    }
-                                } label: {
-                                    if tags.contains(tag) {
-                                        Label(tag, systemImage: "checkmark")
-                                    } else {
-                                        Text(tag)
-                                    }
-                                }
+                        Button {
+                            withAnimation {
+                                self.showTags.toggle()
+                                setGroupAndSort()
                             }
                         } label: {
-                            circle(icon: "tag", active: !tags.isEmpty)
+                            circle(icon: "tag", active: showTags)
                         }
                         
                         Button {
                             withAnimation {
                                 self.showSearch.toggle()
+                                setGroupAndSort()
                             }
                         } label: {
                             circle(icon: "magnifyingglass", active: showSearch)
@@ -230,10 +235,12 @@ struct BobView: View {
                     }
                     .onChange(of: self.tags) { _ in
                         setGroupAndSort()
-                        saveBob()
+                    }
+                    .onChange(of: self.search) { _ in
+                        setGroupAndSort()
                     }
                     .padding(.horizontal, 10)
-                    .padding(.bottom, 5)
+                    .padding(.bottom, 10)
                     
                     BitList(
                         bob: bob,
@@ -263,17 +270,8 @@ struct BobView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 if !self.editBits {
-                    Menu {
-                        Button(action: {
-                            self.editBob.toggle()
-                        }) {
-                            Text("Edit Collection")
-                        }
-                        Button(action: {
-                            self.editBits.toggle()
-                        }) {
-                            Text("Edit Item List")
-                        }
+                    Button {
+                        self.editBob.toggle()
                     } label: {
                         Text("Edit")
                             .foregroundColor(PersistenceController.themeColor)
@@ -300,7 +298,6 @@ struct BobView: View {
             self.display = ListType.init(rawValue: Int(bob.displayType)) ?? .smallList
             self.group = Int(bob.group)
             self.sort = Int(bob.sort)
-            self.tags = bob.tags ?? []
             self.sortReversed = bob.sortReversed
             setGroupAndSort()
             update.toggle()
@@ -325,20 +322,22 @@ struct BobView: View {
     
     // Set group and sort
     func setGroupAndSort() {
-        self.groupableAttributes = getGroupable()
-        self.sortableAttributes = getSortable()
-        self.groups = groupBits()
-        self.bitLists = [:]
-        for group in groups {
-            self.bitLists[group] = sortBits(group: group)
-        }
-        if self.group-1 >= self.groupableAttributes.count {
-            self.group = 0
-            setGroupAndSort()
-        }
-        if self.sort-2 >= self.sortableAttributes.count {
-            self.sort = 0
-            setGroupAndSort()
+        withAnimation {
+            self.groupableAttributes = getGroupable()
+            self.sortableAttributes = getSortable()
+            self.groups = groupBits()
+            self.bitLists = [:]
+            for group in groups {
+                self.bitLists[group] = sortBits(group: group)
+            }
+            if self.group-1 >= self.groupableAttributes.count {
+                self.group = 0
+                setGroupAndSort()
+            }
+            if self.sort-2 >= self.sortableAttributes.count {
+                self.sort = 0
+                setGroupAndSort()
+            }
         }
     }
     
@@ -464,7 +463,7 @@ struct BobView: View {
         else if num == 1 {
             return "Name"
         }
-        return bob.listType == 2 ? "No Sort" : "No Sort"
+        return bob.listType == 2 ? "Ranking" : "Default"
     }
     // Get specific sorting attribute
     func getSortAttribute(_ num: Int) -> Attribute? {
@@ -476,10 +475,10 @@ struct BobView: View {
     // Sort the bits
     func sortBits(group: String) -> [Bit] {
         var filteredBits = bob.bitArray.filter { $0.bob == self.bob }
-        if !search.isEmpty {
+        if showSearch && !search.isEmpty {
             filteredBits = filteredBits.filter { $0.name?.uppercased().contains(self.search.uppercased()) ?? false }
         }
-        if !tags.isEmpty {
+        if showTags && !tags.isEmpty {
             filteredBits = filteredBits.filter { $0.tags?.contains(where: { self.tags.contains($0) }) ?? false }
         }
         // Only include bits of a specific group if indicated
@@ -560,7 +559,6 @@ struct BobView: View {
             bob.displayType = Int16(self.display.rawValue)
             bob.group = Int16(self.group)
             bob.sort = Int16(self.sort)
-            bob.tags = self.tags
             bob.sortReversed = self.sortReversed
         }
         

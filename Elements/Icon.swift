@@ -30,7 +30,7 @@ struct Icon: View {
         .opacity(!faded ? 1 : 0.5)
         .overlay(
             RoundedRectangle(cornerRadius: !square ? size : 20)
-                .stroke(Color(UIColor.systemGray5), lineWidth: size <= 50 ? size/15 : size/30)
+                .stroke(Color(uiColor: image == nil ? .systemGray5 : .systemGray4), lineWidth: size <= 50 ? size/15 : size/30)
         )
     }
 }
