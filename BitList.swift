@@ -39,11 +39,6 @@ struct BitList: View {
     
     @State private var moveBitWarning = false
     
-    @Namespace private var namespace
-    @Namespace private var iconNamespace
-    @Namespace private var textNamespace
-    @Namespace private var detailNamespace
-    
     private var smallIconSize: CGFloat {
         return horizontalSizeClass == .regular && verticalSizeClass == .regular ? 36 : 32
     }
@@ -93,17 +88,17 @@ struct BitList: View {
                                 .padding(.bottom, 5)
                                 .padding(.top, 15)
                             ) {
-                                if [.smallList, .largeList].contains(display) {
-                                    list(name: name, bits: bits, size: geometry.size)
+                                if !bits.isEmpty {
+                                    switch display {
+                                    case .smallList, .largeList:
+                                        list(name: name, bits: bits, size: geometry.size)
+                                    case .smallGrid, .largeGrid:
+                                        grid(name: name, bits: bits, size: geometry.size)
+                                    }
                                 }
-                                else if [.smallGrid, .largeGrid].contains(display) {
-                                    grid(name: name, bits: bits, size: geometry.size)
-                                }
-                                
                             }
                         }
                     }
-                    .animation(.default, value: display)
                     .padding(.horizontal, 10)
                     
                     HStack {
@@ -114,29 +109,21 @@ struct BitList: View {
                         Spacer()
                     }
                     .padding()
-                    .animation(.default, value: display)
                 }
             }
-        }
-        .alert(isPresented: self.$moveBitWarning) {
-            Alert(title: Text("Cannot Move Item"),
-                  message: Text("You can only move items \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
-            )
         }
     }
     
     private func list(name: String, bits: [Bit], size: CGSize) -> some View {
         VStack(spacing: 3) {
             ForEach(bits, id: \.order) { bit in
-                let id = bitID(bit, name)
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
-                    bitRow(bit: bit, id: id)
+                    bitRow(bit: bit)
                 }
                 .padding(5)
                 .padding(.horizontal, 5)
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(10)
-                .matchedGeometryEffect(id: id, in: namespace)
                 .contextMenu {
                     Button {
                         self.editBits.toggle()
@@ -156,11 +143,9 @@ struct BitList: View {
     private func grid(name: String, bits: [Bit], size: CGSize) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: Int((size.width-50) / (display == .smallGrid ? (mediumIconSize+4) : (largeIconSize+4))))) {
             ForEach(bits, id: \.order) { bit in
-                let id = bitID(bit, name)
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
-                    bitGridItem(bit: bit, id: id)
+                    bitGridItem(bit: bit)
                 }
-                .matchedGeometryEffect(id: id, in: namespace)
             }
         }
         .padding(10)
@@ -168,7 +153,7 @@ struct BitList: View {
         .cornerRadius(10)
     }
     
-    private func bitRow(bit: Bit, id: String) -> some View {
+    private func bitRow(bit: Bit) -> some View {
         HStack {
 
             if bob.listType == 2 {
@@ -180,11 +165,9 @@ struct BitList: View {
                         .minimumScaleFactor(0.5)
                 }
                 .frame(width: smallIconSize*0.7, height: smallIconSize, alignment: .center)
-                .matchedGeometryEffect(id: id, in: detailNamespace)
             }
 
             icon(bit: bit, size: display == .smallList ? smallIconSize : mediumIconSize)
-                .matchedGeometryEffect(id: id, in: iconNamespace)
                 .padding(.trailing, 2)
 
             VStack(alignment: .leading) {
@@ -194,7 +177,6 @@ struct BitList: View {
                     .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.label : UIColor.systemGray))
                     .tracking(-0.5)
                     .lineLimit(0)
-                    .matchedGeometryEffect(id: id, in: textNamespace)
 
                 if self.sort >= 2 && bit.attributes != nil && display == .largeList {
                     if sortAttribute?.type == 1 && bit.attributes![sortName] != nil && bit.attributes![sortName] != "" {
@@ -225,7 +207,6 @@ struct BitList: View {
 
             if bob.listType == 1 {
                 Check(bob: bob, bit: bit, update: $update)
-                    .matchedGeometryEffect(id: id, in: detailNamespace)
             }
             
             Image(systemName: "chevron.forward")
@@ -235,15 +216,13 @@ struct BitList: View {
         .id(update)
     }
     
-    private func bitGridItem(bit: Bit, id: String) -> some View {
+    private func bitGridItem(bit: Bit) -> some View {
         VStack {
             ZStack(alignment: .bottomTrailing) {
                 icon(bit: bit, size: display == .smallGrid ? mediumIconSize : largeIconSize)
-                    .matchedGeometryEffect(id: id, in: iconNamespace)
                 
                 if bob.listType == 1 {
                     Check(bob: bob, bit: bit, update: $update, scaleFactor: display == .smallGrid ? mediumIconSize/largeIconSize : 1)
-                        .matchedGeometryEffect(id: id, in: detailNamespace)
                 }
                 if bob.listType == 2 {
                     VStack {
@@ -254,7 +233,6 @@ struct BitList: View {
                             .shadow(color: .secondary, radius: 5)
                     }
                     .frame(width: smallIconSize, height: smallIconSize, alignment: .center)
-                    .matchedGeometryEffect(id: id, in: detailNamespace)
                 }
             }
             
@@ -265,10 +243,7 @@ struct BitList: View {
                     .tracking(-0.5)
                     .lineLimit(0)
                     .frame(maxWidth: largeIconSize)
-                    .matchedGeometryEffect(id: id, in: textNamespace)
             }
-            
-            Text(id)
         }
         .padding(2)
         .id(update)
@@ -292,70 +267,11 @@ struct BitList: View {
         }
     }
     
-    private func bitID(_ bit: Bit, _ group: String = "") -> String {
-        return "\(bit.order)\(group)"
-    }
-    
-    
-    // MARK: Edit Bits
-
-    private func moveBits(from source: IndexSet, to destination: Int) {
-        guard self.sort == 0, self.group == 0, !self.sortReversed else {
-            self.moveBitWarning.toggle()
-            return
-        }
-        var revisedItems: [Bit] = bob.bitArray.map{ $0 }
-        revisedItems.move(fromOffsets: source, toOffset: destination )
-        for reverseIndex in stride( from: revisedItems.count - 1, through: 0, by: -1 ) {
-            revisedItems[reverseIndex].order = Int16(reverseIndex)
-        }
-        bob.bits = NSSet(array: revisedItems)
-        PersistenceController.shared.save()
-        setGroupAndSort()
-    }
-    
     private func removeBit(bit: Bit) {
         var revisedItems: [Bit] = bob.bitArray.map{ $0 }
         revisedItems.remove(at: Int(bit.order))
         bob.bits = NSSet(array: revisedItems)
         managedObjectContext.delete(bit)
-        reorderBits(revisedItems)
-        PersistenceController.shared.save()
-    }
-
-    private func removeBits(offsets: IndexSet, group: String) {
-        var revisedItems: [Bit] = bob.bitArray.map{ $0 }
-        for index in offsets {
-            // Create a temporary array based on how the list is displayed
-            var sortedBitArray: [Bit] = []
-            for currentGroup in groups {
-                sortedBitArray += bitLists[currentGroup] ?? []
-            }
-            // Find the first index of the group if there is a group
-            var firstIndexOfGroup = 0
-            if group != "" && group != "Unassigned" {
-                for currentBit in sortedBitArray {
-                    if currentBit.attributes![groupName] == group {
-                        break
-                    }
-                    firstIndexOfGroup += 1
-                }
-            }
-            else if group == "Unassigned" {
-                for currentBit in sortedBitArray {
-                    if currentBit.attributes![groupName] == nil || currentBit.attributes![groupName] == "" {
-                        break
-                    }
-                    firstIndexOfGroup += 1
-                }
-            }
-            // Find the bit with the index relative to the starting group
-            let bit = sortedBitArray[index+firstIndexOfGroup]
-            // Remove the bit
-            revisedItems.remove(at: Int(bit.order))
-            bob.bits = NSSet(array: revisedItems)
-            managedObjectContext.delete(bit)
-        }
         reorderBits(revisedItems)
         PersistenceController.shared.save()
     }

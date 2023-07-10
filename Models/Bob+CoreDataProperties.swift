@@ -32,7 +32,6 @@ extension Bob {
     @NSManaged public var group: Int16
     @NSManaged public var sort: Int16
     @NSManaged public var sortReversed: Bool
-    @NSManaged public var tags: [String]?
     
     @NSManaged public var bits: NSSet?
     @NSManaged public var attributes: NSSet?

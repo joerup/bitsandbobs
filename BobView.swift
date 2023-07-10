@@ -29,6 +29,8 @@ struct BobView: View {
     @State private var group = 0
     @State private var sort = 0
     @State private var tags: [String] = []
+    @State private var checkedOnly: Bool? = nil
+    @State private var attributeFilters: [(attribute: String, value: String)] = []
     @State private var sortReversed = false
     @State private var showTags = false
     @State private var showSearch = false
@@ -36,6 +38,14 @@ struct BobView: View {
     @FocusState private var keyboardFocused: Bool
     
     @State private var update = false
+    
+    init(bob: Bob) {
+        self.bob = bob
+        self._display = State(initialValue: ListType.init(rawValue: Int(bob.displayType)) ?? .smallList)
+        self._group = State(initialValue: Int(bob.group))
+        self._sort = State(initialValue: Int(bob.sort))
+        self._sortReversed = State(initialValue: bob.sortReversed)
+    }
     
     var body: some View {
 
@@ -135,27 +145,83 @@ struct BobView: View {
                     
                     if showTags {
                         ScrollView(.horizontal) {
-                            if bob.tagList.isEmpty {
-                                Text("No tags")
+                            let filterableAttributes = bob.attributeList.filter { $0.taggable }
+                            if bob.tagList.isEmpty && bob.listType != 1 && filterableAttributes.isEmpty {
+                                Text("No filters available")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .padding(.horizontal, 10)
                                     .padding(5)
                             }
-                            HStack(spacing: 5) {
-                                ForEach(bob.tagList, id: \.self) { tag in
-                                    Button {
-                                        if let index = tags.firstIndex(of: tag) {
-                                            self.tags.remove(at: index)
-                                        } else {
-                                            self.tags.append(tag)
+                            HStack(spacing: 15) {
+                                if bob.listType == 1 {
+                                    HStack(spacing: 5) {
+                                        Button {
+                                            if let checkedOnly, checkedOnly {
+                                                self.checkedOnly = nil
+                                            } else {
+                                                self.checkedOnly = true
+                                            }
+                                        } label: {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                .foregroundColor((checkedOnly ?? false) ? .white : .primary)
+                                                .padding(10)
+                                                .background(RoundedRectangle(cornerRadius: 15).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                         }
-                                    } label: {
-                                        Text(tag)
-                                            .font(.system(.caption, design: .rounded).weight(.semibold))
-                                            .foregroundColor(tags.contains(tag) ? .white : .init(white: 0.2))
-                                            .padding(10)
-                                            .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                        Button {
+                                            if let checkedOnly, !checkedOnly {
+                                                self.checkedOnly = nil
+                                            } else {
+                                                self.checkedOnly = false
+                                            }
+                                        } label: {
+                                            Image(systemName: "xmark")
+                                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                .foregroundColor(!(checkedOnly ?? true) ? .white : .primary)
+                                                .padding(10)
+                                                .background(RoundedRectangle(cornerRadius: 15).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                        }
+                                    }
+                                }
+                                if !bob.tagList.isEmpty {
+                                    HStack(spacing: 5) {
+                                        ForEach(bob.tagList, id: \.self) { tag in
+                                            Button {
+                                                if let index = tags.firstIndex(of: tag) {
+                                                    self.tags.remove(at: index)
+                                                } else {
+                                                    self.tags.append(tag)
+                                                }
+                                            } label: {
+                                                Text(tag)
+                                                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                    .foregroundColor(tags.contains(tag) ? .white : .primary)
+                                                    .padding(10)
+                                                    .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                            }
+                                        }
+                                    }
+                                }
+                                ForEach(filterableAttributes, id: \.name) { attribute in
+                                    HStack(spacing: 5) {
+                                        ForEach(getAllAttributeValues(for: attribute, among: bob.bitArray), id: \.self) { value in
+                                            let filter = (attribute: attribute.name ?? "", value: value)
+                                            Button {
+                                                if let index = attributeFilters.firstIndex(where: { $0.attribute == filter.attribute && $0.value == filter.value }) {
+                                                    attributeFilters.remove(at: index)
+                                                } else {
+                                                    attributeFilters.append(filter)
+                                                }
+                                            } label: {
+                                                let filterActive = attributeFilters.contains(where: { $0.attribute == filter.attribute && $0.value == filter.value })
+                                                Text(attributeValueText(attribute: attribute, value: value))
+                                                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                                                    .foregroundColor(filterActive ? .white : .primary)
+                                                    .padding(10)
+                                                    .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -210,7 +276,7 @@ struct BobView: View {
                                 setGroupAndSort()
                             }
                         } label: {
-                            circle(icon: "tag", active: showTags)
+                            circle(icon: "line.3.horizontal.decrease.circle", active: showTags)
                         }
                         
                         Button {
@@ -234,6 +300,12 @@ struct BobView: View {
                         saveBob()
                     }
                     .onChange(of: self.tags) { _ in
+                        setGroupAndSort()
+                    }
+                    .onChange(of: self.checkedOnly) { _ in
+                        setGroupAndSort()
+                    }
+                    .onChange(of: self.attributeFilters.count) { _ in
                         setGroupAndSort()
                     }
                     .onChange(of: self.search) { _ in
@@ -295,10 +367,6 @@ struct BobView: View {
             }
         }
         .onAppear {
-            self.display = ListType.init(rawValue: Int(bob.displayType)) ?? .smallList
-            self.group = Int(bob.group)
-            self.sort = Int(bob.sort)
-            self.sortReversed = bob.sortReversed
             setGroupAndSort()
             update.toggle()
         }
@@ -322,22 +390,20 @@ struct BobView: View {
     
     // Set group and sort
     func setGroupAndSort() {
-        withAnimation {
-            self.groupableAttributes = getGroupable()
-            self.sortableAttributes = getSortable()
-            self.groups = groupBits()
-            self.bitLists = [:]
-            for group in groups {
-                self.bitLists[group] = sortBits(group: group)
-            }
-            if self.group-1 >= self.groupableAttributes.count {
-                self.group = 0
-                setGroupAndSort()
-            }
-            if self.sort-2 >= self.sortableAttributes.count {
-                self.sort = 0
-                setGroupAndSort()
-            }
+        self.groupableAttributes = getGroupable()
+        self.sortableAttributes = getSortable()
+        self.groups = groupBits()
+        self.bitLists = [:]
+        for group in groups {
+            self.bitLists[group] = sortBits(group: group)
+        }
+        if self.group-1 >= self.groupableAttributes.count {
+            self.group = 0
+            setGroupAndSort()
+        }
+        if self.sort-2 >= self.sortableAttributes.count {
+            self.sort = 0
+            setGroupAndSort()
         }
     }
     
@@ -378,68 +444,9 @@ struct BobView: View {
         else {
             // Get the attribute that groups are grouped by
             let attribute = getGroupAttribute(group)
-            guard attribute != nil else { return [""] }
-            // Group by text
-            if attribute!.type == 0 {
-                var presets = attribute!.presets ?? []
-                // Add all bits' values to presets
-                var unassigned = false
-                for bit in filteredBits {
-                    autoreleasepool {
-                        for value in bit.allAttributeValues(attribute!.name) {
-                            if !presets.contains(value) && value != "" {
-                                presets += [value]
-                            }
-                            else if value == "" {
-                                unassigned = true
-                            }
-                        }
-                    }
-                }
-                // Remove empty presets
-                presets = presets.filter { !$0.isEmpty }
-                // Group by preset order
-                if attribute!.sortTextType == 0 {
-                    if attribute!.unassignedGroup && unassigned {
-                        presets += ["Unassigned"]
-                    }
-                    return presets
-                }
-                // Group by name
-                else if attribute!.sortTextType == 1 {
-                    presets = presets.sorted(by: { $0 < $1 })
-                    if attribute!.unassignedGroup && unassigned {
-                        presets += ["Unassigned"]
-                    }
-                    return presets
-                }
-            }
-            // Group by number
-            else if attribute!.type == 1 {
-                var values: [String] = []
-                var unassigned = false
-                for bit in filteredBits {
-                    autoreleasepool {
-                        for value in bit.allAttributeValues(attribute!.name) {
-                            if !values.contains(value) && value != "" {
-                                values += [value]
-                            }
-                            else if value == "" {
-                                unassigned = true
-                            }
-                        }
-                    }
-                }
-                if unassigned {
-                    values += ["Unassigned"]
-                }
-                return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
-            }
-            // Group by boolean
-            else if attribute!.type == 2 {
-                return ["True","False"]
-            }
-            return [""]
+            guard let attribute else { return [""] }
+            // Get all the attribute values
+            return getAllAttributeValues(for: attribute, among: filteredBits, includeAll: true)
         }
     }
     
@@ -478,8 +485,8 @@ struct BobView: View {
         if showSearch && !search.isEmpty {
             filteredBits = filteredBits.filter { $0.name?.uppercased().contains(self.search.uppercased()) ?? false }
         }
-        if showTags && !tags.isEmpty {
-            filteredBits = filteredBits.filter { $0.tags?.contains(where: { self.tags.contains($0) }) ?? false }
+        if showTags {
+            filteredBits = filtered(filteredBits)
         }
         // Only include bits of a specific group if indicated
         var bitArray: [Bit] = filteredBits
@@ -549,6 +556,96 @@ struct BobView: View {
             return self.sortReversed ? sorted.reversed() : sorted
         }
         return self.sortReversed ? bitArray.reversed() : bitArray
+    }
+    
+    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit], includeAll: Bool = false) -> [String] {
+        // Group by text
+        if attribute.type == 0 {
+            var presets = attribute.presets ?? []
+            // Add all bits' values to presets
+            var unassigned = false
+            for bit in bits {
+                autoreleasepool {
+                    for value in bit.allAttributeValues(attribute.name) {
+                        if !presets.contains(value) && value != "" {
+                            presets += [value]
+                        }
+                        else if value == "" {
+                            unassigned = true
+                        }
+                    }
+                }
+            }
+            // Remove empty presets
+            presets = presets.filter { !$0.isEmpty }
+            // Group by preset order
+            if attribute.sortTextType == 0 {
+                if attribute.unassignedGroup && unassigned {
+                    presets += ["Unassigned"]
+                }
+                return presets
+            }
+            // Group by name
+            else if attribute.sortTextType == 1 {
+                presets = presets.sorted(by: { $0 < $1 })
+                if attribute.unassignedGroup && unassigned {
+                    presets += ["Unassigned"]
+                }
+                return presets
+            }
+        }
+        // Group by number
+        else if attribute.type == 1 {
+            var values: [String] = []
+            var unassigned = false
+            for bit in bits {
+                autoreleasepool {
+                    for value in bit.allAttributeValues(attribute.name) {
+                        if !values.contains(value) && value != "" {
+                            values += [value]
+                        }
+                        else if value == "" {
+                            unassigned = true
+                        }
+                    }
+                }
+            }
+            if unassigned {
+                values += ["Unassigned"]
+            }
+            return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
+        }
+        // Group by boolean
+        else if attribute.type == 2 {
+            return includeAll || !attribute.boolDisplayFalse ? ["True","False"] : ["True"]
+        }
+        return [""]
+    }
+    
+    private func filtered(_ bits: [Bit]) -> [Bit] {
+        bits.filter { bit in
+            if let checkedOnly {
+                if checkedOnly && !bit.checked { return false }
+                if !checkedOnly && bit.checked { return false }
+            }
+            if !tags.isEmpty, !(bit.tags ?? []).contains(where: { tags.contains($0) }) {
+                return false
+            }
+            for attribute in Set(attributeFilters.map({ $0.attribute })) {
+                let selectedValues = attributeFilters.filter({ $0.attribute == attribute }).map({ $0.value })
+                if !bit.allAttributeValues(attribute).contains(where: { selectedValues.contains($0) }) {
+                    return false
+                }
+            }
+            return true
+        }
+    }
+    
+    private func attributeValueText(attribute: Attribute, value: String) -> String {
+        switch attribute.type {
+        case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : "\(attribute.name ?? ""): \(value)"
+        default: return value
+        }
     }
     
     // MARK: Save

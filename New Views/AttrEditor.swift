@@ -24,13 +24,16 @@ struct AttrEditor: View {
     @State var allowMultiple: Bool = false
     @State var maxCount: String = ""
     
+    // Organization
+    @State var sortable: Bool = true
+    @State var groupable: Bool = false
+    @State var taggable: Bool = false
+    @State var unassignedGroup: Bool = false
+    
     // Text
     @State var presets: [String] = []
     @State var restrictPresets: Bool = false
-    @State var sortable: Bool = true
-    @State var groupable: Bool = false
     @State var sortTextType: Int = 0
-    @State var unassignedGroup: Bool = false
     
     // Numbers
     @State var decimal: Bool = false
@@ -171,8 +174,21 @@ struct AttrEditor: View {
                         }
                     }
                     
-                    if !presets.isEmpty || restrictPresets {
-                        Section {
+                    Section {
+                        
+                        if self.sortable || self.groupable {
+                            Picker("Default Order", selection: self.$sortTextType) {
+                                Text("As Listed")
+                                    .tag(0)
+                                Text("ABC Order")
+                                    .tag(1)
+                            }
+                            .pickerStyle(.menu)
+                            .accentColor(PersistenceController.themeColor)
+                            .animation(.default, value: sortable || groupable)
+                        }
+                        
+                        if !presets.isEmpty || restrictPresets {
                             Toggle(isOn: self.$restrictPresets) {
                                 Text("Restrict Choices to Presets")
                             }
@@ -202,17 +218,10 @@ struct AttrEditor: View {
                             .animation(.default, value: groupable)
                         }
                         
-                        if self.sortable || self.groupable {
-                            Picker("Default Order", selection: self.$sortTextType) {
-                                Text("As Listed")
-                                    .tag(0)
-                                Text("ABC Order")
-                                    .tag(1)
-                            }
-                            .pickerStyle(.menu)
-                            .accentColor(PersistenceController.themeColor)
-                            .animation(.default, value: sortable || groupable)
+                        Toggle(isOn: self.$taggable) {
+                            Text("Filterable")
                         }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                 }
                 else if type == 1 {
@@ -321,6 +330,11 @@ struct AttrEditor: View {
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             }
+                            
+                            Toggle(isOn: self.$taggable) {
+                                Text("Filterable")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         }
                     }
                 }
@@ -339,6 +353,14 @@ struct AttrEditor: View {
                     
                         Toggle(isOn: self.$boolDisplayFalse) {
                             Text("Display only if True")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                    }
+                    
+                    Section {
+                        
+                        Toggle(isOn: self.$taggable) {
+                            Text("Filterable")
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
@@ -393,6 +415,12 @@ struct AttrEditor: View {
                 self.allowMultiple = attribute!.allowMultiple
                 self.maxCount = attribute!.maxCount == 0 ? "" : String(attribute!.maxCount)
                 
+                // Organization
+                self.sortable = attribute!.sortable
+                self.groupable = attribute!.groupable
+                self.taggable = attribute!.taggable
+                self.unassignedGroup = attribute!.unassignedGroup
+                
                 // Text
                 self.presets = attribute!.presets ?? []
                 if bob != nil {
@@ -406,10 +434,7 @@ struct AttrEditor: View {
                 }
                 self.presets.removeAll(where: { $0 == "" })
                 self.restrictPresets = attribute!.restrictPresets
-                self.sortable = attribute!.sortable
-                self.groupable = attribute!.groupable
                 self.sortTextType = Int(attribute!.sortTextType)
-                self.unassignedGroup = attribute!.unassignedGroup
                 
                 // Numbers
                 self.decimal = attribute!.decimal
@@ -463,13 +488,16 @@ struct AttrEditor: View {
             attribute.allowMultiple = self.allowMultiple
             attribute.maxCount = Int16(self.maxCount) ?? 0
             
+            // Organization
+            attribute.sortable = self.sortable
+            attribute.taggable = self.taggable
+            attribute.groupable = self.groupable
+            attribute.unassignedGroup = self.unassignedGroup
+            
             // Text
             attribute.presets = self.presets
             attribute.restrictPresets = self.restrictPresets
-            attribute.sortable = self.sortable
-            attribute.groupable = self.groupable
             attribute.sortTextType = Int16(self.sortTextType)
-            attribute.unassignedGroup = self.unassignedGroup
             
             // Numbers
             attribute.decimal = self.decimal
@@ -495,13 +523,16 @@ struct AttrEditor: View {
                 attribute!.allowMultiple = self.allowMultiple
                 attribute!.maxCount = Int16(self.maxCount) ?? 0
                 
+                // Organization
+                attribute!.sortable = self.sortable
+                attribute!.groupable = self.groupable
+                attribute!.taggable = self.taggable
+                attribute!.unassignedGroup = self.unassignedGroup
+                
                 // Text
                 attribute!.presets = self.presets
                 attribute!.restrictPresets = self.restrictPresets
-                attribute!.sortable = self.sortable
-                attribute!.groupable = self.groupable
                 attribute!.sortTextType = Int16(self.sortTextType)
-                attribute!.unassignedGroup = self.unassignedGroup
                 
                 // Numbers
                 attribute!.decimal = self.decimal

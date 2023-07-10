@@ -24,13 +24,16 @@ extension Attribute {
     @NSManaged public var maxCount: Int16
     @NSManaged public var bob: Bob?
     
+    // Organization
+    @NSManaged public var sortable: Bool
+    @NSManaged public var groupable: Bool
+    @NSManaged public var taggable: Bool
+    @NSManaged public var unassignedGroup: Bool
+    
     // Text
     @NSManaged public var presets: [String]?
     @NSManaged public var restrictPresets: Bool
-    @NSManaged public var sortable: Bool
-    @NSManaged public var groupable: Bool
     @NSManaged public var sortTextType: Int16
-    @NSManaged public var unassignedGroup: Bool
     
     // Numbers
     @NSManaged public var decimal: Bool

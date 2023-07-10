@@ -85,9 +85,32 @@ struct BitEditor: View {
                                 Text(t < tags.count ? tags[t] : "").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
                                     .overlay {
                                         if t == tags.count {
-                                            ZStack {
+                                            let allTags = self.bob.tagList.filter({ !tags.contains($0) })
+                                            if allTags.isEmpty {
                                                 Button {
-                                                    self.tags += [""]
+                                                    self.tags.append("")
+                                                } label: {
+                                                    Image(systemName: "plus")
+                                                        .font(.callout.weight(.semibold))
+                                                        .foregroundColor(PersistenceController.themeColor)
+                                                }
+                                                .buttonStyle(.plain)
+                                            } else {
+                                                Menu {
+                                                    ForEach(allTags, id: \.self) { tag in
+                                                        Button {
+                                                            self.tags.append(tag)
+                                                        } label: {
+                                                            Text(tag)
+                                                        }
+                                                    }
+                                                    Section {
+                                                        Button {
+                                                            self.tags.append("")
+                                                        } label: {
+                                                            Label("New", systemImage: "plus")
+                                                        }
+                                                    }
                                                 } label: {
                                                     Image(systemName: "plus")
                                                         .font(.callout.weight(.semibold))
@@ -125,31 +148,6 @@ struct BitEditor: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(Color(uiColor: .systemGray3))
-                                }
-                                .buttonStyle(.plain)
-                                .padding(.trailing, -5)
-                            }
-                        }
-                    }
-                            
-                    
-                    let allTags = self.bob.tagList.filter({ !tags.contains($0) })
-                    if !allTags.isEmpty {
-                        WrappingHStack(allTags, id: \.self) { tag in
-                            ZStack(alignment: .topTrailing) {
-                                
-                                Text(tag)
-                                    .foregroundColor(.gray)
-                                    .font(.system(.headline, design: .rounded).weight(.semibold))
-                                    .padding(10)
-                                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(uiColor: .systemGray6).opacity(0.7)))
-                                    .padding(.vertical, 5)
-                                
-                                Button {
-                                    self.tags.append(tag)
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(PersistenceController.themeColor)
                                 }
                                 .buttonStyle(.plain)
                                 .padding(.trailing, -5)
