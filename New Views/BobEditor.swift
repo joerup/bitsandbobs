@@ -211,15 +211,14 @@ struct BobEditor: View {
         }
         .interactiveDismissDisabled()
         .onAppear {
-            if bob != nil {
-                self.create = false
-                self.name = bob!.name ?? ""
-                self.desc = bob!.desc ?? ""
-                self.image = bob!.image != nil ? UIImage(data: bob!.image!)! : UIImage()
-                self.attributes = bob!.attributeList
-                self.nextAttrID = bob!.nextAttrID
-                self.listType = Int(bob!.listType)
-            }
+            guard let bob else { return }
+            self.create = false
+            self.name = bob.name ?? ""
+            self.desc = bob.desc ?? ""
+            self.image = bob.image != nil ? UIImage(data: bob.image!)! : UIImage()
+            self.attributes = bob.attributeList
+            self.nextAttrID = bob.nextAttrID
+            self.listType = Int(bob.listType)
         }
     }
     

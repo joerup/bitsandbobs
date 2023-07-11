@@ -414,10 +414,16 @@ struct AttrValueSetter: View {
                             
                             // Number Editor
                             TextField(self.getRangeText(), text: self.$newValue, onCommit: {
+                                // Empty
+                                if newValue.isEmpty {
+                                    setValue("")
+                                    return
+                                }
                                 // Reject if not a number
                                 if Double(self.newValue) == nil {
                                     self.newValue = ""
                                     self.displayOutOfRangeWarning.toggle()
+                                    setValue("")
                                     return
                                 }
                                 // Turn to integer if decimals are not allowed

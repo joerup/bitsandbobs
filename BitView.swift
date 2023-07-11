@@ -201,9 +201,9 @@ struct BitView: View {
                         .frame(height: UIScreen.main.bounds.height*0.1)
 
                 }
-                .sheet(isPresented: self.$editBit, content: {
+                .sheet(isPresented: self.$editBit) {
                     BitEditor(bit: bit, bob: bob)
-                })
+                }
             }
         }
         .navigationBarTitle("\(self.bit.name ?? "")")

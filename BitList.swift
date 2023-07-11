@@ -257,7 +257,7 @@ struct BitList: View {
                     Text(String(bit.name?.first ?? " "))
                         .font(.system(size: size/2, weight: .black, design: .rounded))
                         .foregroundColor(.gray)
-                        .opacity(0.12)
+                        .opacity(0.2)
                 }
             }
         }

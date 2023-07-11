@@ -44,6 +44,9 @@ struct BobList: View {
                                     Text("Create your first collection!")
                                         .padding()
                                 }
+                                .onAppear {
+                                    self.newBob.toggle()
+                                }
                             }
                             
                             ForEach(self.bobs, id: \.order) { bob in
