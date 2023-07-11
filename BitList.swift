@@ -76,10 +76,12 @@ struct BitList: View {
                                     Text(name)
                                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                                         .foregroundColor(Color(uiColor: .secondaryLabel))
+                                        .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
                                     Spacer()
                                     Text(bitCountText(bits: bits))
-                                        .font(.system(.caption, design: .rounded, weight: .medium))
+                                        .font(.system(.footnote, design: .rounded, weight: .medium))
                                         .foregroundColor(Color(uiColor: .tertiaryLabel))
+                                        .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                 }
                                 .transition(.opacity)
                                 .padding(.horizontal, 15)
@@ -104,6 +106,7 @@ struct BitList: View {
                         Text("\(displayedBitCountText(bits: bob.bitArray))")
                             .font(.system(.subheadline, design: .rounded, weight: .medium))
                             .foregroundColor(Color(UIColor.systemGray2))
+                            .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                         Spacer()
                     }
                     .padding()
@@ -229,6 +232,7 @@ struct BitList: View {
                     .tracking(-0.5)
                     .lineLimit(0)
                     .frame(maxWidth: largeIconSize)
+                    .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
             }
         }
         .padding(2)
@@ -249,6 +253,12 @@ struct BitList: View {
                     size: size,
                     faded: bob.listType == 1 && !bit.checked
                 )
+                .overlay {
+                    Text(String(bit.name?.first ?? " "))
+                        .font(.system(size: size/2, weight: .black, design: .rounded))
+                        .foregroundColor(.gray)
+                        .opacity(0.12)
+                }
             }
         }
     }

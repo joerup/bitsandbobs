@@ -102,6 +102,7 @@ struct BobView: View {
                             Image(systemName: "magnifyingglass")
                                 .fontWeight(.bold)
                                 .foregroundColor(PersistenceController.themeColor)
+                                .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                 .padding(.horizontal, 5)
                                 .aspectRatio(1.0, contentMode: .fill)
                             TextField("Search", text: self.$search, onCommit: {
@@ -112,6 +113,7 @@ struct BobView: View {
                                 }
                             })
                             .fontWeight(.regular)
+                            .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                             .padding(.horizontal, 7)
                             .focused($keyboardFocused)
                             .onAppear {
@@ -130,15 +132,17 @@ struct BobView: View {
                                 Image(systemName: "xmark.circle.fill")
                                     .imageScale(.small)
                                     .foregroundColor(Color(UIColor.systemGray))
+                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                     .padding(.horizontal, 5)
                             }
                             .buttonStyle(.plain)
                         }
                         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                        .padding(5)
+                        .frame(height: 32)
+                        .padding(.horizontal, 5)
                         .background(Color(UIColor.systemGray6).cornerRadius(10))
                         .padding(.vertical, 2)
-                        .padding(.bottom, 5)
+                        .padding(.bottom, 8)
                         .padding(.horizontal, 10)
                         .transition(.opacity)
                     }
@@ -165,8 +169,9 @@ struct BobView: View {
                                         } label: {
                                             Image(systemName: "checkmark")
                                                 .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                .dynamicTypeSize(..<DynamicTypeSize.xLarge)
                                                 .foregroundColor((checkedOnly ?? false) ? .white : .primary)
-                                                .padding(10)
+                                                .frame(width: 32, height: 32)
                                                 .background(RoundedRectangle(cornerRadius: 15).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                         }
                                         Button {
@@ -178,8 +183,9 @@ struct BobView: View {
                                         } label: {
                                             Image(systemName: "xmark")
                                                 .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                .dynamicTypeSize(..<DynamicTypeSize.xLarge)
                                                 .foregroundColor(!(checkedOnly ?? true) ? .white : .primary)
-                                                .padding(10)
+                                                .frame(width: 32, height: 32)
                                                 .background(RoundedRectangle(cornerRadius: 15).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                         }
                                     }
@@ -197,7 +203,9 @@ struct BobView: View {
                                                 Text(tag)
                                                     .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                     .foregroundColor(tags.contains(tag) ? .white : .primary)
+                                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
+                                                    .frame(height: 32)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -218,7 +226,9 @@ struct BobView: View {
                                                 Text(attributeValueText(attribute: attribute, value: value))
                                                     .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                     .foregroundColor(filterActive ? .white : .primary)
+                                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
+                                                    .frame(height: 32)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -229,7 +239,7 @@ struct BobView: View {
                         }
                         .scrollIndicators(.hidden)
                         .padding(.vertical, 2)
-                        .padding(.bottom, 5)
+                        .padding(.bottom, 8)
                         .transition(.opacity)
                     }
                     
@@ -688,8 +698,21 @@ struct BobView: View {
             .overlay {
                 Image(systemName: icon)
                     .fontWeight(.bold)
+                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                     .foregroundColor(active ? .white : PersistenceController.themeColor)
             }
+    }
+    
+    @ViewBuilder
+    private var backgroundImage: some View {
+        if let imageData = bob.image, let image = UIImage(data: imageData) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .edgesIgnoringSafeArea(.all)
+                .blur(radius: 100)
+                .opacity(0.2)
+        }
     }
 }
 

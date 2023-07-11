@@ -177,7 +177,7 @@ struct AttrEditor: View {
                     Section {
                         
                         if self.sortable || self.groupable {
-                            Picker("Default Order", selection: self.$sortTextType) {
+                            Picker("Default Preset Order", selection: self.$sortTextType) {
                                 Text("As Listed")
                                     .tag(0)
                                 Text("ABC Order")
@@ -210,6 +210,11 @@ struct AttrEditor: View {
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         
+                        Toggle(isOn: self.$taggable) {
+                            Text("Filterable")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        
                         if self.groupable {
                             Toggle(isOn: self.$unassignedGroup) {
                                 Text("Include Unassigned Group")
@@ -217,11 +222,6 @@ struct AttrEditor: View {
                             .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             .animation(.default, value: groupable)
                         }
-                        
-                        Toggle(isOn: self.$taggable) {
-                            Text("Filterable")
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                 }
                 else if type == 1 {
@@ -324,17 +324,17 @@ struct AttrEditor: View {
                             }
                             .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             
+                            Toggle(isOn: self.$taggable) {
+                                Text("Filterable")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                            
                             if self.groupable {
                                 Toggle(isOn: self.$unassignedGroup) {
                                     Text("Include Unassigned Group")
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             }
-                            
-                            Toggle(isOn: self.$taggable) {
-                                Text("Filterable")
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         }
                     }
                 }
@@ -352,7 +352,7 @@ struct AttrEditor: View {
                         .accentColor(PersistenceController.themeColor)
                     
                         Toggle(isOn: self.$boolDisplayFalse) {
-                            Text("Display only if True")
+                            Text("Hide if False")
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }

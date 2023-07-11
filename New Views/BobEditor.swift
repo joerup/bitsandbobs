@@ -75,7 +75,7 @@ struct BobEditor: View {
                             .multilineTextAlignment(.trailing)
                     }
                     Picker("Collection Type", selection: self.$listType) {
-                        Text("List")
+                        Text("Basic")
                             .tag(0)
                         Text("Checklist")
                             .tag(1)

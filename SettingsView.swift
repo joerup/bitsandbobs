@@ -26,13 +26,13 @@ struct SettingsView: View {
                 
                 List {
                     
-                    Section {
-                        Button(action: {
-                            getSampleBobs()
-                        }) {
-                            row("Generate Sample Collections")
-                        }
-                    }
+//                    Section {
+//                        Button(action: {
+//                            getSampleBobs()
+//                        }) {
+//                            row("Generate Sample Collections")
+//                        }
+//                    }
                     
                     Section {
                         Link(destination: URL(string: "https://www.bitsandbobs.app")!) {

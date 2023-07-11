@@ -31,30 +31,52 @@ struct BitView: View {
                     
                     ZStack {
                         
-                        if let imageData = bit.image, let image = UIImage(data: imageData) {
-                            if !bob.displayBitIcon {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(10)
-                                    .padding(10)
+                        Group {
+                            if let imageData = bit.image, let image = UIImage(data: imageData) {
+                                if !bob.displayBitIcon {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                        .cornerRadius(20)
+                                        .padding(10)
+                                        .onTapGesture {
+                                            toggleImageDisplay()
+                                        }
+                                }
+                                else if let imageData = bob.image, let image = UIImage(data: imageData) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .blur(radius: 7)
+                                        .opacity(0.2)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                        .cornerRadius(20)
+                                        .padding(10)
+                                }
+                                else {
+                                    Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                        .cornerRadius(20)
+                                        .padding(10)
+                                }
                             }
                             else if let imageData = bob.image, let image = UIImage(data: imageData) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .blur(radius: 7)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(10)
+                                    .opacity(0.2)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .cornerRadius(20)
                                     .padding(10)
                             }
                             else {
-                                Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2).cornerRadius(10).padding(10)
+                                Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .cornerRadius(20)
+                                    .padding(10)
                             }
-                        }
-                        else {
-                            Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2).cornerRadius(10).padding(10)
                         }
                         
                         VStack {
@@ -64,7 +86,10 @@ struct BitView: View {
                                 Spacer()
                                 
                                 Icon(image: UIImage(data: bit.image!)!, size: UIScreen.main.bounds.height*0.35)
-                                    .shadow(color: .black, radius: 20)
+                                    .shadow(color: .black.opacity(0.5), radius: 20)
+                                    .onTapGesture {
+                                        toggleImageDisplay()
+                                    }
                             }
                             
                             Spacer()
@@ -75,16 +100,16 @@ struct BitView: View {
                                     Text(String(bit.order+1))
                                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                         .tracking(-0.5)
-                                        .foregroundColor(Color(bit.image == nil ? UIColor.gray : UIColor.white))
-                                        .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
-                                        .frame(width: 32, height: 32)
+                                        .foregroundColor(Color((bit.image != nil && !bob.displayBitIcon) ? UIColor.white : UIColor.label))
+                                        .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
+                                        .frame(width: 48, height: 48)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.5)
                                         .padding(10)
                                 }
                                 else if bob.listType == 1 {
                                     Circle()
-                                        .frame(width: 32, height: 32)
+                                        .frame(width: 48, height: 48)
                                         .opacity(0)
                                         .padding(10)
                                 }
@@ -97,77 +122,80 @@ struct BitView: View {
                                         .tracking(-0.5)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
-                                        .foregroundColor(bit.image != nil ? Color(UIColor.white) : Color(UIColor.label))
-                                        .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
+                                        .foregroundColor((bit.image != nil && !bob.displayBitIcon) ? Color(UIColor.white) : Color(UIColor.label))
+                                        .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
 
-                                    if bit.desc != nil && bit.desc != "" {
-                                        Text(bit.desc ?? "")
+                                    if let desc = bit.desc, !desc.isEmpty {
+                                        Text(desc)
                                             .font(.system(.headline, design: .rounded).weight(.heavy))
                                             .tracking(-0.25)
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.2)
-                                            .foregroundColor(Color(bit.image != nil ? UIColor.white : UIColor.systemGray))
-                                            .shadow(color: .black, radius: bit.image != nil ? 20 : 0)
+                                            .foregroundColor(Color((bit.image != nil && !bob.displayBitIcon) ? UIColor.white : UIColor.systemGray))
+                                            .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
                                     }
                                 }
                                 
                                 Spacer()
                                 
                                 if bob.listType == 1 {
-                                    Check(bob: bob, bit: bit, update: $update)
+                                    Check(bob: bob, bit: bit, update: $update, scaleFactor: 1.5)
                                         .padding(10)
                                 }
                                 else if bob.listType == 2 {
                                     Circle()
-                                        .frame(width: 32, height: 32)
+                                        .frame(width: 48, height: 48)
                                         .opacity(0)
                                         .padding(10)
                                 }
                             }
                             .padding(.bottom, 20)
                         }
-                        .frame(width: max(geometry.size.width-20, 1), height: bit.image != nil ? UIScreen.main.bounds.height*0.5 : UIScreen.main.bounds.height*0.2)
+                        .frame(width: max(geometry.size.width-20, 1), height: bit.image != nil ? UIScreen.main.bounds.height*0.5 : UIScreen.main.bounds.height*0.15)
                         .padding(10)
                     }
                     .id(update)
                     
-                    if let tags = bit.tags, !tags.isEmpty {
-                        WrappingHStack(tags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.system(.headline, design: .rounded).weight(.semibold))
-                                .padding(10)
-                                .background(RoundedRectangle(cornerRadius: 15).fill(Color(uiColor: .systemGray6)))
-                                .padding(.vertical, 5)
-                        }
-                        .padding(.horizontal, 15)
-                        .padding(.bottom, 5)
-                    }
-                    
-                    if bit.attributes != nil {
-                        ForEach(0..<bob.attributeList.count, id: \.self) { a in
-                            if bit.attributes![bob.attributeList[a].name ?? ""] != nil &&
-                                bit.attributes![bob.attributeList[a].name ?? ""] != "" &&
-                                !(bob.attributeList[a].type == 2 && bob.attributeList[a].boolDisplayFalse && bit.attributes![bob.attributeList[a].name ?? ""] == "False") {
-                                AStack {
-                                    Text(bob.attributeList[a].displayName ?? "")
-                                        .font(.system(.headline, design: .rounded).weight(.semibold))
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                    Spacer()
-                                    Text(editAttributeValue(bit.attributes![bob.attributeList[a].name ?? ""] ?? "", attribute: bob.attributeList[a]))
-                                        .font(.system(.headline, design: .rounded).weight(.medium))
-                                        .multilineTextAlignment(.trailing)
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.top, 5)
+                    VStack(alignment: .leading) {
+                        
+                        if let tags = bit.tags, !tags.isEmpty {
+                            WrappingHStack(tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.system(.headline, design: .rounded).weight(.semibold))
+                                    .padding(10)
+                                    .background(RoundedRectangle(cornerRadius: 15).fill(Color(uiColor: .systemGray6)))
+                                    .padding(.vertical, 5)
                             }
+                            .padding(.horizontal, 15)
+                            .padding(.bottom, 5)
                         }
+                        
+                        if bit.attributes != nil {
+                                ForEach(0..<bob.attributeList.count, id: \.self) { a in
+                                    if bit.attributes![bob.attributeList[a].name ?? ""] != nil &&
+                                        bit.attributes![bob.attributeList[a].name ?? ""] != "" &&
+                                        !(bob.attributeList[a].type == 2 && bob.attributeList[a].boolDisplayFalse && bit.attributes![bob.attributeList[a].name ?? ""] == "False") {
+                                        AStack {
+                                            Text(bob.attributeList[a].displayName ?? "")
+                                                .font(.system(.headline, design: .rounded).weight(.semibold))
+                                                .foregroundColor(Color(UIColor.systemGray))
+                                            Spacer()
+                                            Text(editAttributeValue(bit.attributes![bob.attributeList[a].name ?? ""] ?? "", attribute: bob.attributeList[a]))
+                                                .font(.system(.headline, design: .rounded).weight(.medium))
+                                                .multilineTextAlignment(.trailing)
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.top, 5)
+                                    }
+                                }
+                            }
+                        
+                        Text(bit.paragraph ?? "")
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(4)
+                            .padding(20)
                     }
-
-                    Text(bit.paragraph ?? "")
-                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(4)
-                        .padding(20)
 
                     Spacer()
                         .frame(height: UIScreen.main.bounds.height*0.1)
@@ -198,6 +226,14 @@ struct BitView: View {
                 let bit = newBits[Int(bit.order)]
                 self.bit = bit
             }
+        }
+    }
+    
+    private func toggleImageDisplay() {
+        bob.displayBitIcon.toggle()
+        PersistenceController.shared.save()
+        withAnimation {
+            update.toggle()
         }
     }
     
