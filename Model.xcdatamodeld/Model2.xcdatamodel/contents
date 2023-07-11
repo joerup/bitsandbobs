@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="21513" systemVersion="22F66" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Attribute" representedClassName="Attribute" syncable="YES">
+        <attribute name="allowMultiple" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="boolDisplayFalse" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="boolType" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="decimal" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="displayName" optional="YES" attributeType="String"/>
+        <attribute name="groupable" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="maxCount" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="maxIncluded" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="maxNum" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="minIncluded" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="minNum" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="order" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="prefix" optional="YES" attributeType="String"/>
+        <attribute name="presets" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData" customClassName="[String]"/>
+        <attribute name="restrictPresets" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="sortable" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="sortTextType" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="suffix" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="unassignedGroup" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <relationship name="bob" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Bob" inverseName="attributes" inverseEntity="Bob"/>
+    </entity>
+    <entity name="Bit" representedClassName="Bit" syncable="YES">
+        <attribute name="attributes" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData" customClassName="[String:String]"/>
+        <attribute name="checked" attributeType="Boolean" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="icon" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="image" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="order" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="paragraph" optional="YES" attributeType="String"/>
+        <relationship name="bob" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Bob" inverseName="bits" inverseEntity="Bob"/>
+    </entity>
+    <entity name="Bob" representedClassName="Bob" syncable="YES">
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="displayBitDescList" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="displayBitIcon" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="displayBitImgList" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="group" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="image" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="listType" optional="YES" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="nextAttrID" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="nextBitID" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="order" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sort" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sortReversed" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <relationship name="attributes" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Attribute" inverseName="bob" inverseEntity="Attribute"/>
+        <relationship name="bits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Bit" inverseName="bob" inverseEntity="Bit"/>
+    </entity>
+</model>

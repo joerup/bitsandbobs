@@ -13,9 +13,6 @@ struct BobView: View {
     @Environment(\.managedObjectContext) var managedObjectContext
 
     var bob: Bob
-    var bits: [Bit] {
-        return bob.bitArray
-    }
     
     @State private var groups: [String] = []
     @State private var bitLists: [String:[Bit]] = [:]
@@ -28,14 +25,27 @@ struct BobView: View {
     @State private var newBit = false
     @State private var editBits = false
     
-    @State private var moveBitWarning = false
-    
+    @State private var display: ListType = .smallList
     @State private var group = 0
     @State private var sort = 0
+    @State private var tags: [String] = []
+    @State private var checkedOnly: Bool? = nil
+    @State private var attributeFilters: [(attribute: String, value: String)] = []
     @State private var sortReversed = false
+    @State private var showTags = false
+    @State private var showSearch = false
     @State private var search = ""
+    @FocusState private var keyboardFocused: Bool
     
     @State private var update = false
+    
+    init(bob: Bob) {
+        self.bob = bob
+        self._display = State(initialValue: ListType.init(rawValue: Int(bob.displayType)) ?? .smallList)
+        self._group = State(initialValue: Int(bob.group))
+        self._sort = State(initialValue: Int(bob.sort))
+        self._sortReversed = State(initialValue: bob.sortReversed)
+    }
     
     var body: some View {
 
@@ -64,7 +74,7 @@ struct BobView: View {
                         
                         VStack {
                             Text(bob.name ?? "")
-                                .font(.system(.largeTitle, design: .rounded).weight(.black))
+                                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                 .tracking(-0.5)
                                 .lineLimit(0)
@@ -74,7 +84,7 @@ struct BobView: View {
 
                             if bob.desc != nil && bob.desc != "" {
                                 Text(bob.desc ?? "")
-                                    .font(.system(.headline, design: .rounded).weight(.bold))
+                                    .font(.system(.headline, design: .rounded).weight(.heavy))
                                     .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                     .tracking(-0.25)
                                     .lineLimit(0)
@@ -87,211 +97,263 @@ struct BobView: View {
                         .padding(.horizontal, 10)
                     }
                     
-                    List {
-                
-                        HStack {
-                            HStack {
-                                Image(systemName: "folder\(group != 0 ? ".fill" : "")")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(PersistenceController.themeColor)
-                                    .onTapGesture {
-                                        if group != 0 { group = 0 }
-                                    }
-                                Menu {
-                                    ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
-                                        Button {
-                                            withAnimation {
-                                                self.group = a
-                                            }
-                                        } label: {
-                                            Text(getGroup(a, display: true))
-                                        }
-                                    }
-                                } label: {
-                                    Text(getGroup(group, display: true))
-                                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                                        .font(geometry.size.width > 800 ? .headline : .callout)
-                                        .lineLimit(0)
-                                        .minimumScaleFactor(0.5)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .onChange(of: self.group) { _ in
-                                setGroupAndSort()
-                                saveBob()
-                            }
-                            
-                            HStack {
-                                Spacer(minLength: 0)
-                                Menu {
-                                    ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
-                                        Button {
-                                            withAnimation {
-                                                self.sort = a
-                                            }
-                                        } label: {
-                                            Text(getSort(a, display: true))
-                                        }
-                                    }
-                                } label: {
-                                    HStack {
-                                        Text(getSort(sort, display: true))
-                                            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                                            .font(geometry.size.width > 800 ? .headline : .callout)
-                                            .lineLimit(0)
-                                            .minimumScaleFactor(0.5)
-                                    }
-                                }
-                                .onChange(of: self.sort) { _ in
-                                    setGroupAndSort()
-                                    saveBob()
-                                }
-                                Button(action: {
-                                    self.sortReversed.toggle()
-                                    setGroupAndSort()
-                                    saveBob()
-                                }) {
-                                    Image(systemName: self.sortReversed ? "arrow.up" : "arrow.down")
-                                        .fontWeight(.medium)
-                                        .foregroundColor(PersistenceController.themeColor)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .padding(.bottom, 5)
-                        .listRowSeparator(.hidden)
-                        
+                    if showSearch {
                         HStack(spacing: 0) {
                             Image(systemName: "magnifyingglass")
-                                .imageScale(geometry.size.width > 800 ? .medium : .small)
-                                .foregroundColor(Color(UIColor.systemGray))
-                                .padding(2)
-                            TextField("Search", text: self.$search)
-                                .fontWeight(.regular)
-                                .padding(.horizontal, 7)
-                                .onChange(of: self.search) { _ in
-                                    setGroupAndSort()
+                                .fontWeight(.bold)
+                                .foregroundColor(PersistenceController.themeColor)
+                                .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                                .padding(.horizontal, 5)
+                                .aspectRatio(1.0, contentMode: .fill)
+                            TextField("Search", text: self.$search, onCommit: {
+                                if search == "" {
+                                    withAnimation {
+                                        self.showSearch = false
+                                    }
                                 }
+                            })
+                            .fontWeight(.regular)
+                            .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                            .padding(.horizontal, 7)
+                            .focused($keyboardFocused)
+                            .onAppear {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    keyboardFocused = true
+                                }
+                            }
                             Spacer()
-                            if !self.search.isEmpty {
-                                Button {
+                            Button {
+                                withAnimation {
                                     self.search = ""
+                                    self.showSearch = false
                                     setGroupAndSort()
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .imageScale(.small)
-                                        .foregroundColor(Color(UIColor.systemGray))
-                                        .padding(2)
                                 }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 5)
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                        .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
-                        .listRowSeparator(.hidden)
-                        
-                        if self.bob.bitArray.isEmpty {
-                            HStack {
-                                Spacer()
-                                Text("This collection is empty.")
-                                    .multilineTextAlignment(.center)
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .imageScale(.small)
                                     .foregroundColor(Color(UIColor.systemGray))
-                                    .padding()
-                                Spacer()
+                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                                    .padding(.horizontal, 5)
                             }
-                            .listRowSeparator(.hidden)
+                            .buttonStyle(.plain)
                         }
-                            
-                        ForEach(self.groups, id: \.self) { group in
-                            
-                            let name = editGroupName(group)
-                            Section(header:
-                                name != "" ? Text(name) : nil
-                            ) {
-                                ForEach(self.bitLists[group]!, id: \.order) { bit in
-
-                                    NavigationLink(destination: BitView(bit: bit, bob: bob)) {
-
-                                        HStack {
-
-                                            if bob.listType == 2 {
-                                                VStack {
-                                                    Text(String(bit.order+1))
-                                                        .font(.headline)
-                                                        .fontWeight(.bold)
-                                                        .foregroundColor(Color(UIColor.systemGray))
-                                                }
-                                                .frame(width: 30, height: 30, alignment: .center)
-                                                .padding(.leading, -6)
-                                                .padding(.trailing, 2)
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                        .frame(height: 32)
+                        .padding(.horizontal, 5)
+                        .background(Color(UIColor.systemGray6).cornerRadius(10))
+                        .padding(.vertical, 2)
+                        .padding(.bottom, 8)
+                        .padding(.horizontal, 10)
+                        .transition(.opacity)
+                    }
+                    
+                    if showTags {
+                        ScrollView(.horizontal) {
+                            let filterableAttributes = bob.attributeList.filter { $0.taggable }
+                            if bob.tagList.isEmpty && bob.listType != 1 && filterableAttributes.isEmpty {
+                                Text("No filters available")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 10)
+                                    .padding(5)
+                            }
+                            HStack(spacing: 20) {
+                                if bob.listType == 1 {
+                                    HStack(spacing: 5) {
+                                        Button {
+                                            if let checkedOnly, checkedOnly {
+                                                self.checkedOnly = nil
+                                            } else {
+                                                self.checkedOnly = true
                                             }
-
-                                            if bob.displayBitImgList != 2 {
-                                                Icon(image: UIImage(data: bit.image ?? Data()) ?? UIImage(),
-                                                     size: bob.displayBitImgList == 0 ? 30 : 50,
-                                                     faded: bob.listType == 1 && !bit.checked)
-                                                    .padding(.vertical, bob.displayBitImgList == 0 ? 3 : 0)
-                                                    .padding(.leading, -4)
-                                                    .padding(.trailing, 2)
+                                        } label: {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                .dynamicTypeSize(..<DynamicTypeSize.xLarge)
+                                                .foregroundColor((checkedOnly ?? false) ? .white : .primary)
+                                                .frame(width: 32, height: 32)
+                                                .background(RoundedRectangle(cornerRadius: 15).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                        }
+                                        Button {
+                                            if let checkedOnly, !checkedOnly {
+                                                self.checkedOnly = nil
+                                            } else {
+                                                self.checkedOnly = false
                                             }
-
-                                            VStack(alignment: .leading) {
-
-                                                Text(bit.name ?? "")
-                                                    .font(.system(.title3, design: .rounded).weight(.semibold))
-                                                    .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.label : UIColor.systemGray))
-                                                    .tracking(-0.5)
-                                                    .font(.title2)
-                                                    .lineLimit(0)
-
-                                                if self.sort >= 2 && bit.attributes != nil && bob.displayBitDescList {
-                                                    if getSortAttribute(sort)?.type == 1 && bit.attributes![getSort(sort)] != nil && bit.attributes![getSort(sort)] != "" {
-                                                        Text(editAttributeNumber(bit.attributes![getSort(sort)]!, attribute: getSortAttribute(sort)))
-                                                            .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
-                                                            .tracking(-0.25)
-                                                            .font(.subheadline)
-                                                            .lineLimit(0)
-                                                    }
-                                                    else if bit.attributes![getSort(sort)] != nil && bit.attributes![getSort(sort)] != "" {
-                                                        Text(bit.attributes![getSort(sort)]!)
-                                                            .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
-                                                            .tracking(-0.25)
-                                                            .font(.subheadline)
-                                                            .lineLimit(0)
-                                                    }
+                                        } label: {
+                                            Image(systemName: "xmark")
+                                                .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                .dynamicTypeSize(..<DynamicTypeSize.xLarge)
+                                                .foregroundColor(!(checkedOnly ?? true) ? .white : .primary)
+                                                .frame(width: 32, height: 32)
+                                                .background(RoundedRectangle(cornerRadius: 15).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                        }
+                                    }
+                                }
+                                if !bob.tagList.isEmpty {
+                                    HStack(spacing: 5) {
+                                        ForEach(bob.tagList, id: \.self) { tag in
+                                            Button {
+                                                if let index = tags.firstIndex(of: tag) {
+                                                    self.tags.remove(at: index)
+                                                } else {
+                                                    self.tags.append(tag)
                                                 }
-                                                else if bit.desc != nil && bit.desc != "" && bob.displayBitDescList {
-                                                    Text(bit.desc!)
-                                                        .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.systemGray : UIColor.systemGray2))
-                                                        .tracking(-0.25)
-                                                        .font(.subheadline)
-                                                        .lineLimit(0)
-                                                }
-                                            }
-
-                                            Spacer()
-                                            
-                                            if bob.listType == 1 {
-                                                Check(bob: bob, bit: bit, update: $update)
+                                            } label: {
+                                                Text(tag)
+                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                    .foregroundColor(tags.contains(tag) ? .white : .primary)
+                                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                                                    .padding(10)
+                                                    .frame(height: 32)
+                                                    .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
                                     }
-                                    .id(update)
                                 }
-                                .onMove(perform: moveBits)
-                                .onDelete(perform: { offsets in
-                                    removeBits(offsets: offsets, group: group)
-                                })
+                                ForEach(filterableAttributes, id: \.name) { attribute in
+                                    HStack(spacing: 5) {
+                                        ForEach(getAllAttributeValues(for: attribute, among: bob.bitArray), id: \.self) { value in
+                                            let filter = (attribute: attribute.name ?? "", value: value)
+                                            Button {
+                                                if let index = attributeFilters.firstIndex(where: { $0.attribute == filter.attribute && $0.value == filter.value }) {
+                                                    attributeFilters.remove(at: index)
+                                                } else {
+                                                    attributeFilters.append(filter)
+                                                }
+                                            } label: {
+                                                let filterActive = attributeFilters.contains(where: { $0.attribute == filter.attribute && $0.value == filter.value })
+                                                Text(attributeValueText(attribute: attribute, value: value))
+                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                    .foregroundColor(filterActive ? .white : .primary)
+                                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                                                    .padding(10)
+                                                    .frame(height: 32)
+                                                    .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            .padding(.horizontal, 5)
-                            .listRowBackground(Color(UIColor.systemGray6).cornerRadius(10).padding(.vertical, 2).padding(.horizontal, 10))
+                            .padding(.horizontal, 10)
                         }
-                        .listRowSeparator(.hidden)
+                        .scrollIndicators(.hidden)
+                        .padding(.vertical, 2)
+                        .padding(.bottom, 8)
+                        .transition(.opacity)
                     }
-                    .listStyle(.plain)
-                    .environment(\.editMode, .constant(self.editBits ? EditMode.active : EditMode.inactive))
+                    
+                    HStack {
+                            
+                        Menu {
+                            Picker("", selection: self.$display) {
+                                ForEach(ListType.allCases, id: \.rawValue) { type in
+                                    Label(type.name, systemImage: type.icon)
+                                        .tag(type)
+                                }
+                            }
+                        } label: {
+                            circle(icon: display.icon, active: false)
+                        }
+                        
+                        Menu {
+                            Picker("", selection: self.$group) {
+                                ForEach(0..<groupableAttributes.count+1, id : \.self) { a in
+                                    Text(getGroup(a, display: true))
+                                        .tag(a)
+                                }
+                            }
+                        } label: {
+                            circle(icon: "folder", active: group != 0)
+                        }
+                        
+                        Menu {
+                            Picker("", selection: self.$sort) {
+                                ForEach(0..<sortableAttributes.count+2, id : \.self) { a in
+                                    Text(getSort(a, display: true))
+                                        .tag(a)
+                                }
+                            }
+                            Section {
+                                Picker("", selection: self.$sortReversed) {
+                                    Label("Forward", systemImage: "arrow.down")
+                                        .tag(false)
+                                    Label("Reverse", systemImage: "arrow.up")
+                                        .tag(true)
+                                }
+                                .onTapGesture {
+                                    sortReversed.toggle()
+                                }
+                            }
+                        } label: {
+                            circle(icon: "arrow.up.arrow.down", active: sort != 0 || sortReversed)
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            withAnimation {
+                                self.showTags.toggle()
+                                setGroupAndSort()
+                            }
+                        } label: {
+                            circle(icon: "line.3.horizontal.decrease", active: showTags)
+                        }
+                        
+                        Button {
+                            withAnimation {
+                                self.showSearch.toggle()
+                                setGroupAndSort()
+                            }
+                        } label: {
+                            circle(icon: "magnifyingglass", active: showSearch)
+                        }
+                    }
+                    .onChange(of: self.display) { _ in
+                        saveBob()
+                    }
+                    .onChange(of: self.group) { _ in
+                        setGroupAndSort()
+                        saveBob()
+                    }
+                    .onChange(of: self.sort) { _ in
+                        setGroupAndSort()
+                        saveBob()
+                    }
+                    .onChange(of: self.sortReversed) { _ in
+                        setGroupAndSort()
+                        saveBob()
+                    }
+                    .onChange(of: self.tags) { _ in
+                        setGroupAndSort()
+                    }
+                    .onChange(of: self.checkedOnly) { _ in
+                        setGroupAndSort()
+                    }
+                    .onChange(of: self.attributeFilters.count) { _ in
+                        setGroupAndSort()
+                    }
+                    .onChange(of: self.search) { _ in
+                        setGroupAndSort()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 10)
+                    
+                    BitList(
+                        bob: bob,
+                        groups: groups,
+                        bitLists: bitLists,
+                        display: display,
+                        group: group,
+                        sort: sort,
+                        sortReversed: sortReversed,
+                        groupName: getGroup(group),
+                        groupAttribute: getGroupAttribute(group),
+                        sortName: getSort(sort),
+                        sortAttribute: getSortAttribute(sort),
+                        setGroupAndSort: setGroupAndSort,
+                        update: $update
+                    )
                 }
             }
         }
@@ -302,30 +364,21 @@ struct BobView: View {
                 Text("")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !self.editBits {
-                    Menu {
-                        Button(action: {
-                            self.editBob.toggle()
-                        }) {
-                            Text("Edit Collection")
-                        }
-                        Button(action: {
-                            self.editBits.toggle()
-                        }) {
-                            Text("Edit Item List")
-                        }
+                Menu {
+                    Button {
+                        self.editBob.toggle()
                     } label: {
-                        Text("Edit")
-                            .foregroundColor(PersistenceController.themeColor)
-                            .minimumScaleFactor(0.5)
+                        Text("Edit Collection")
                     }
-                }
-                else {
-                    Text("Done")
+                    Button {
+                        self.editBits.toggle()
+                    } label: {
+                        Text("Edit Items")
+                    }
+                } label: {
+                    Text("Edit")
                         .foregroundColor(PersistenceController.themeColor)
-                        .onTapGesture {
-                            self.editBits.toggle()
-                        }
+                        .minimumScaleFactor(0.5)
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -337,9 +390,6 @@ struct BobView: View {
             }
         }
         .onAppear {
-            self.group = Int(bob.group)
-            self.sort = Int(bob.sort)
-            self.sortReversed = bob.sortReversed
             setGroupAndSort()
             update.toggle()
         }
@@ -353,16 +403,14 @@ struct BobView: View {
                 setGroupAndSort()
             }
         }
-        .sheet(isPresented: self.$newBit, content: {
+        .sheet(isPresented: self.$newBit) {
             BitEditor(bob: bob)
-        })
-        .sheet(isPresented: self.$editBob, content: {
+        }
+        .sheet(isPresented: self.$editBob) {
             BobEditor(bob: bob)
-        })
-        .alert(isPresented: self.$moveBitWarning) {
-            Alert(title: Text("Cannot Move Item"),
-                  message: Text("You can only move items \(self.bob.listType == 2 ? "in a ranked list " : "")when grouping by None, sorting by \(self.bob.listType == 2 ? "Ranking" : "Default"), and pointing the arrow down.")
-            )
+        }
+        .sheet(isPresented: self.$editBits, onDismiss: { setGroupAndSort(); update.toggle() }) {
+            BitListEditor(bob: bob)
         }
     }
     
@@ -413,7 +461,7 @@ struct BobView: View {
     }
     // Group the bits
     func groupBits() -> [String] {
-        let filteredBits = self.bits.filter { $0.bob == self.bob }
+        let filteredBits = bob.bitArray.filter { $0.bob == self.bob }
         // Return a single item if no groups specified
         if self.group == 0 {
             return [""]
@@ -422,64 +470,9 @@ struct BobView: View {
         else {
             // Get the attribute that groups are grouped by
             let attribute = getGroupAttribute(group)
-            guard attribute != nil else { return [""] }
-            // Group by text
-            if attribute!.type == 0 {
-                var presets = attribute!.presets ?? []
-                // Add all bits' values to presets
-                var unassigned = false
-                for bit in filteredBits {
-                    autoreleasepool {
-                        let value = bit.attributes?[attribute!.name ?? ""] ?? ""
-                        if !presets.contains(value) && value != "" {
-                            presets += [value]
-                        }
-                        else if bit.attributes?[attribute!.name ?? ""] == nil || bit.attributes?[attribute!.name ?? ""] == "" {
-                            unassigned = true
-                        }
-                    }
-                }
-                // Group by preset order
-                if attribute!.sortTextType == 0 {
-                    if attribute!.unassignedGroup && unassigned {
-                        presets += ["Unassigned"]
-                    }
-                    return presets
-                }
-                // Group by name
-                else if attribute!.sortTextType == 1 {
-                    presets = presets.sorted(by: { $0 < $1 })
-                    if attribute!.unassignedGroup && unassigned {
-                        presets += ["Unassigned"]
-                    }
-                    return presets
-                }
-            }
-            // Group by number
-            else if attribute!.type == 1 {
-                var values: [String] = []
-                var unassigned = false
-                for bit in filteredBits {
-                    autoreleasepool {
-                        let value = bit.attributes?[attribute!.name ?? ""] ?? ""
-                        if !values.contains(value) && value != "" {
-                            values += [value]
-                        }
-                        else if value == "" {
-                            unassigned = true
-                        }
-                    }
-                }
-                if unassigned {
-                    values += ["Unassigned"]
-                }
-                return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
-            }
-            // Group by boolean
-            else if attribute!.type == 2 {
-                return ["True","False"]
-            }
-            return [""]
+            guard let attribute else { return [""] }
+            // Get all the attribute values
+            return getAllAttributeValues(for: attribute, among: filteredBits, includeAll: true)
         }
     }
     
@@ -489,7 +482,7 @@ struct BobView: View {
     func getSortable() -> [Attribute] {
         var sortable: [Attribute] = []
         for attribute in self.bob.attributeList {
-            if (attribute.type == 0 && attribute.sortable) || attribute.type == 1 {
+            if (attribute.type == 0 && attribute.sortable) || attribute.type == 1, !attribute.allowMultiple {
                 sortable += [attribute]
             }
         }
@@ -514,9 +507,12 @@ struct BobView: View {
     }
     // Sort the bits
     func sortBits(group: String) -> [Bit] {
-        var filteredBits = self.bits.filter { $0.bob == self.bob }
-        if !search.isEmpty {
+        var filteredBits = bob.bitArray.filter { $0.bob == self.bob }
+        if showSearch && !search.isEmpty {
             filteredBits = filteredBits.filter { $0.name?.uppercased().contains(self.search.uppercased()) ?? false }
+        }
+        if showTags {
+            filteredBits = filtered(filteredBits)
         }
         // Only include bits of a specific group if indicated
         var bitArray: [Bit] = filteredBits
@@ -525,7 +521,7 @@ struct BobView: View {
             let attribute = getGroup(self.group)
             for bit in filteredBits {
                 autoreleasepool {
-                    if bit.attributes![attribute] == group || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "Unassigned") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
+                    if bit.allAttributeValues(attribute).contains(group) || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "Unassigned") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
                         bitArray += [bit]
                     }
                 }
@@ -588,108 +584,95 @@ struct BobView: View {
         return self.sortReversed ? bitArray.reversed() : bitArray
     }
     
-    // MARK: Formatting
-    
-    func editGroupName(_ name: String) -> String {
-        
-        let currentGroup = getGroupAttribute(self.group)
-        
-        if currentGroup?.type == 1 && Double(name) != nil {
-            return editAttributeNumber(name, attribute: currentGroup)
-        }
-        else if currentGroup?.type == 2 && currentGroup?.boolType == 1 {
-            switch name {
-            case "True":
-                return "Yes"
-            case "False":
-                return "No"
-            default:
-                return name
-            }
-        }
-        
-        return name
-    }
-    
-    func editAttributeNumber(_ value: String, attribute: Attribute?) -> String {
-        guard attribute != nil else { return value }
-        if attribute!.prefix != nil && attribute!.suffix != nil && attribute!.prefix != "" && attribute!.suffix != "" {
-            return attribute!.prefix! + " " + value + " " + attribute!.suffix!
-        }
-        else if attribute!.prefix != nil && attribute!.prefix != "" {
-            return attribute!.prefix! + " " + value
-        }
-        else if attribute!.suffix != nil && attribute!.suffix != "" {
-            return value + " " + attribute!.suffix!
-        }
-        return value
-    }
-    
-    // MARK: Edit Bits
-
-    func moveBits(from source: IndexSet, to destination: Int) {
-        guard self.sort == 0, self.group == 0, !self.sortReversed else {
-            self.moveBitWarning.toggle()
-            return
-        }
-        var revisedItems: [Bit] = bob.bitArray.map{ $0 }
-        revisedItems.move(fromOffsets: source, toOffset: destination )
-        for reverseIndex in stride( from: revisedItems.count - 1, through: 0, by: -1 ) {
-            revisedItems[reverseIndex].order = Int16(reverseIndex)
-        }
-        bob.bits = NSSet(array: revisedItems)
-        PersistenceController.shared.save()
-        setGroupAndSort()
-    }
-
-    func removeBits(offsets: IndexSet, group: String) {
-        var revisedItems: [Bit] = bob.bitArray.map{ $0 }
-        for index in offsets {
-            // Create a temporary array based on how the list is displayed
-            var sortedBitArray: [Bit] = []
-            for currentGroup in groupBits() {
-                sortedBitArray += sortBits(group: currentGroup)
-            }
-            // Find the first index of the group if there is a group
-            var firstIndexOfGroup = 0
-            if group != "" && group != "Unassigned" {
-                for currentBit in sortedBitArray {
-                    if currentBit.attributes![getGroup(self.group)] == group {
-                        break
+    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit], includeAll: Bool = false) -> [String] {
+        // Group by text
+        if attribute.type == 0 {
+            var presets = attribute.presets ?? []
+            // Add all bits' values to presets
+            var unassigned = false
+            for bit in bits {
+                autoreleasepool {
+                    for value in bit.allAttributeValues(attribute.name) {
+                        if !presets.contains(value) && value != "" {
+                            presets += [value]
+                        }
+                        else if value == "" {
+                            unassigned = true
+                        }
                     }
-                    firstIndexOfGroup += 1
                 }
             }
-            else if group == "Unassigned" {
-                for currentBit in sortedBitArray {
-                    if currentBit.attributes![getGroup(self.group)] == nil || currentBit.attributes![getGroup(self.group)] == "" {
-                        break
+            // Remove empty presets
+            presets = presets.filter { !$0.isEmpty }
+            // Group by preset order
+            if attribute.sortTextType == 0 {
+                if attribute.unassignedGroup && unassigned {
+                    presets += ["Unassigned"]
+                }
+                return presets
+            }
+            // Group by name
+            else if attribute.sortTextType == 1 {
+                presets = presets.sorted(by: { $0 < $1 })
+                if attribute.unassignedGroup && unassigned {
+                    presets += ["Unassigned"]
+                }
+                return presets
+            }
+        }
+        // Group by number
+        else if attribute.type == 1 {
+            var values: [String] = []
+            var unassigned = false
+            for bit in bits {
+                autoreleasepool {
+                    for value in bit.allAttributeValues(attribute.name) {
+                        if !values.contains(value) && value != "" {
+                            values += [value]
+                        }
+                        else if value == "" {
+                            unassigned = true
+                        }
                     }
-                    firstIndexOfGroup += 1
                 }
             }
-            // Find the bit with the index relative to the starting group
-            let bit = sortedBitArray[index+firstIndexOfGroup]
-            // Remove the bit
-            revisedItems.remove(at: Int(bit.order))
-            bob.bits = NSSet(array: revisedItems)
-            managedObjectContext.delete(bit)
+            if unassigned {
+                values += ["Unassigned"]
+            }
+            return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
         }
-        reorderBits(revisedItems)
-        PersistenceController.shared.save()
+        // Group by boolean
+        else if attribute.type == 2 {
+            return includeAll || !attribute.boolDisplayFalse ? ["True","False"] : ["True"]
+        }
+        return [""]
     }
     
-    func reorderBits(_ array: [Bit]) {
-        let revisedItems = array
-        var index = 0
-        while index < revisedItems.count {
-            revisedItems[index].order = Int16(index)
-            index += 1
+    private func filtered(_ bits: [Bit]) -> [Bit] {
+        bits.filter { bit in
+            if let checkedOnly {
+                if checkedOnly && !bit.checked { return false }
+                if !checkedOnly && bit.checked { return false }
+            }
+            if !tags.isEmpty, !(bit.tags ?? []).contains(where: { tags.contains($0) }) {
+                return false
+            }
+            for attribute in Set(attributeFilters.map({ $0.attribute })) {
+                let selectedValues = attributeFilters.filter({ $0.attribute == attribute }).map({ $0.value })
+                if !bit.allAttributeValues(attribute).contains(where: { selectedValues.contains($0) }) {
+                    return false
+                }
+            }
+            return true
         }
-        bob.bits = NSSet(array: revisedItems)
-        bob.nextBitID = Int16(revisedItems.count)
-        PersistenceController.shared.save()
-        setGroupAndSort()
+    }
+    
+    private func attributeValueText(attribute: Attribute, value: String) -> String {
+        let value = BitList.editValueName(value, attribute: attribute)
+        switch attribute.type {
+        case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : "\(attribute.name ?? ""): \(value)"
+        default: return value
+        }
     }
     
     // MARK: Save
@@ -697,6 +680,7 @@ struct BobView: View {
     func saveBob() {
         
         managedObjectContext.performAndWait {
+            bob.displayType = Int16(self.display.rawValue)
             bob.group = Int16(self.group)
             bob.sort = Int16(self.sort)
             bob.sortReversed = self.sortReversed
@@ -704,4 +688,31 @@ struct BobView: View {
         
         PersistenceController.shared.save()
     }
+    
+    // MARK: Display
+    
+    private func circle(icon: String, active: Bool) -> some View {
+        Circle()
+            .fill(active ? PersistenceController.themeColor : Color(uiColor: .systemGray6))
+            .frame(width: 40, height: 40)
+            .overlay {
+                Image(systemName: icon)
+                    .fontWeight(.bold)
+                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                    .foregroundColor(active ? .white : PersistenceController.themeColor)
+            }
+    }
+    
+    @ViewBuilder
+    private var backgroundImage: some View {
+        if let imageData = bob.image, let image = UIImage(data: imageData) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .edgesIgnoringSafeArea(.all)
+                .blur(radius: 100)
+                .opacity(0.2)
+        }
+    }
 }
+

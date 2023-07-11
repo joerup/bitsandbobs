@@ -14,22 +14,31 @@ struct Check: View {
     
     @Binding var update: Bool
     
+    var scaleFactor: CGFloat = 1.0
+    
+    private var size: CGFloat {
+        return 32 * scaleFactor
+    }
+    
     var body: some View {
         ZStack {
             Circle()
                 .fill(self.bit.checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
-                .frame(width: 35, height: 35)
-            Circle()
-                .stroke(Color(UIColor.systemGray4))
-                .frame(width: 35, height: 35)
+                .frame(width: size, height: size)
             if self.bit.checked {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: size*7/16, weight: .black))
                     .foregroundColor(.white)
-                    .animation(.easeInOut, value: bit.checked)
+            } else {
+                Image(systemName: "xmark")
+                    .font(.system(size: size*7/16, weight: .black))
+                    .foregroundColor(Color(uiColor: .systemGray4))
             }
         }
-        .id(update)
+        .overlay(
+            RoundedRectangle(cornerRadius: size)
+                .stroke(Color(uiColor: .systemGray5), lineWidth: size/15)
+        )
         .onTapGesture {
             let revisedItems: [Bit] = bob.bitArray.map{ $0 }
             revisedItems[Int(bit.order)].checked.toggle()

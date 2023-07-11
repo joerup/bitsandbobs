@@ -23,9 +23,8 @@ extension Bob {
     @NSManaged public var image: Data?
     
     @NSManaged public var listType: Int16
+    @NSManaged public var displayType: Int16
     @NSManaged public var displayBitIcon: Bool
-    @NSManaged public var displayBitImgList: Int16
-    @NSManaged public var displayBitDescList: Bool
     
     @NSManaged public var nextBitID: Int16
     @NSManaged public var nextAttrID: Int16
@@ -49,6 +48,14 @@ extension Bob {
         return set.sorted {
             $0.order < $1.order
         }
+    }
+    
+    public var tagList: [String] {
+        var tags: [String] = []
+        for bit in bitArray {
+            bit.tags?.forEach { !tags.contains($0) ? tags.append($0) : nil }
+        }
+        return Array(tags)
     }
 }
 

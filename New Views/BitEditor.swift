@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WrappingHStack
 
 struct BitEditor: View {
     
@@ -16,6 +17,7 @@ struct BitEditor: View {
     @State var desc = ""
     @State var paragraph = ""
     @State var image = UIImage()
+    @State var tags: [String] = []
     @State var attributes: [String:String] = [:]
     @State var checked = false
     
@@ -24,6 +26,8 @@ struct BitEditor: View {
     @State private var showDelete = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
+    @State private var editTags = false
+    @FocusState private var keyboardFocused: Bool
 
     @Environment(\.presentationMode) var presentationMode
     
@@ -73,17 +77,113 @@ struct BitEditor: View {
                     }
                 }
                 
+                Section(header: Text("Tags").font(.callout)) {
+                    WrappingHStack(0...self.tags.count, id: \.self) { t in
+                        ZStack(alignment: .topTrailing) {
+                            ZStack {
+                                Text("Tag").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
+                                Text(t < tags.count ? tags[t] : "").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
+                                    .overlay {
+                                        if t == tags.count {
+                                            let allTags = self.bob.tagList.filter({ !tags.contains($0) })
+                                            if allTags.isEmpty {
+                                                Button {
+                                                    self.tags.append("")
+                                                } label: {
+                                                    Image(systemName: "plus")
+                                                        .font(.callout.weight(.semibold))
+                                                        .foregroundColor(PersistenceController.themeColor)
+                                                        .padding(10)
+                                                }
+                                                .buttonStyle(.plain)
+                                            } else {
+                                                Menu {
+                                                    ForEach(allTags, id: \.self) { tag in
+                                                        Button {
+                                                            self.tags.append(tag)
+                                                        } label: {
+                                                            Text(tag)
+                                                        }
+                                                    }
+                                                    Section {
+                                                        Button {
+                                                            self.tags.append("")
+                                                        } label: {
+                                                            Label("New", systemImage: "plus")
+                                                        }
+                                                    }
+                                                } label: {
+                                                    Image(systemName: "plus")
+                                                        .font(.callout.weight(.semibold))
+                                                        .foregroundColor(PersistenceController.themeColor)
+                                                        .padding(10)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                        } else if t == tags.count-1 {
+                                            TextField("Tag", text: Binding(
+                                                get: { self.tags[t] },
+                                                set: { self.tags[t] = $0 }))
+                                            .font(.system(.headline, design: .rounded).weight(.semibold))
+                                            .focused($keyboardFocused)
+                                            .onAppear {
+                                                guard tags[t].isEmpty else { return }
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                    keyboardFocused = true
+                                                }
+                                            }
+                                        } else {
+                                            TextField("Tag", text: Binding(
+                                                get: { self.tags[t] },
+                                                set: { self.tags[t] = $0 }))
+                                            .font(.system(.headline, design: .rounded).weight(.semibold))
+                                        }
+                                    }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(uiColor: .systemGray6)))
+                            .padding(.vertical, 5)
+                            
+                            if t < tags.count {
+                                Button {
+                                    self.tags.remove(at: t)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(Color(uiColor: .systemGray3))
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.trailing, -5)
+                            }
+                        }
+                    }
+                }
+                .onChange(of: tags) { tags in
+                    while self.tags.count >= 2 && self.tags[self.tags.count-2].isEmpty && self.tags[self.tags.count-1].isEmpty {
+                        self.tags.removeLast()
+                    }
+                }
+                
                 if !self.bob.attributeList.isEmpty {
                     
-                    Section("Attributes") {
+                    Section(header: Text("Attributes").font(.callout)) {
                         
                         ForEach(self.bob.attributeList.indices, id: \.self) { a in
-                            AttrValueSetter(attributes: self.$attributes, a: a, bob: self.bob)
+                            let attribute = self.bob.attributeList[a]
+                            AStack(alignment: .center) {
+                                Text(attribute.displayName ?? "")
+                                Spacer()
+                                VStack(alignment: .trailing) {
+                                    let count = !attribute.allowMultiple ? 1 : attribute.maxCount != 0 ? Int(attribute.maxCount) : ((self.attributes[attribute.name ?? ""]?.filter({ $0 == Constants.delimiter }).count ?? 0) + ((self.attributes[attribute.name ?? ""]?.last ?? Constants.delimiter) == Constants.delimiter ? 1 : 2))
+                                    ForEach(0..<count, id: \.self) { index in
+                                        AttrValueSetter(attributes: self.$attributes, a: a, index: index, bob: self.bob)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
                 
-                Section("Text") {
+                Section(header: Text("Text").font(.callout), footer: Spacer().frame(height: 100)) {
                     TextField("Text", text: self.$paragraph, axis: .vertical)
                 }
             }
@@ -118,7 +218,7 @@ struct BitEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(PersistenceController.themeColor)
+                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the item a name."))
@@ -134,8 +234,12 @@ struct BitEditor: View {
                 self.desc = bit.desc ?? ""
                 self.paragraph = bit.paragraph ?? ""
                 self.image = bit.image != nil ? UIImage(data: bit.image!)! : UIImage()
+                self.tags = bit.tags ?? []
                 self.attributes = bit.attributes ?? [:]
                 self.checked = bit.checked
+                if paragraph.filter({ $0 != " " }).isEmpty {
+                    paragraph = ""
+                }
             }
         }
     }
@@ -146,6 +250,8 @@ struct BitEditor: View {
             self.createEmptyWarning.toggle()
             return
         }
+        
+        tags = tags.filter { !$0.isEmpty }
         
         if create {
             
@@ -158,7 +264,9 @@ struct BitEditor: View {
             bit.desc = self.desc
             bit.paragraph = self.paragraph
             bit.image = self.image.jpegData(compressionQuality: 0.75)
+            bit.icon = bit.image?.compressed()
             bit.bob = self.bob
+            bit.tags = self.tags
             bit.attributes = self.attributes
             bit.checked = self.checked
             
@@ -171,6 +279,8 @@ struct BitEditor: View {
                 bit!.desc = self.desc
                 bit!.paragraph = self.paragraph
                 bit!.image = self.image.jpegData(compressionQuality: 0.75)
+                bit!.icon = bit!.image?.compressed()
+                bit!.tags = self.tags
                 bit!.attributes = self.attributes
                 bit!.checked = self.checked
             }
@@ -191,6 +301,7 @@ struct AttrValueSetter: View {
     @Binding var attributes: [String:String]
     
     var a: Int
+    var index: Int
     var bob: Bob
     
     @State private var newValue = ""
@@ -199,11 +310,7 @@ struct AttrValueSetter: View {
     
     var body: some View {
         
-        AStack {
-            
-            Text(self.bob.attributeList[a].displayName ?? "")
-            
-            Spacer()
+        Group {
             
             // Text
             if bob.attributeList[a].type == 0 {
@@ -216,7 +323,7 @@ struct AttrValueSetter: View {
                         HStack {
                             Spacer()
                             Text(self.newValue != "" ? self.newValue : self.bob.attributeList[a].displayName ?? "")
-                                .foregroundColor(self.newValue == "" ? Color(UIColor.systemGray) : nil)
+                                .foregroundColor(self.newValue == "" ? Color(UIColor.tertiaryLabel) : nil)
                                 .lineLimit(0)
                                 .opacity(self.bob.attributeList[a].restrictPresets ? 1 : 0)
                                 .padding(.horizontal, 8)
@@ -232,8 +339,7 @@ struct AttrValueSetter: View {
                             TextField(self.bob.attributeList[a].displayName ?? "", text: self.$newValue)
                                 .multilineTextAlignment(.trailing)
                                 .onChange(of: self.newValue, perform: { value in
-                                    let name = self.bob.attributeList[a].name ?? ""
-                                    self.attributes[name] = value
+                                    setValue(value)
                                 })
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -242,25 +348,28 @@ struct AttrValueSetter: View {
                     
                     Menu {
                         // Picker
-                        Picker("New", selection: self.$newValue) {
-                            ForEach(getAttributeValues(a), id: \.self) { value in
+                        Picker("", selection: self.$newValue) {
+                            ForEach(getPresets(a), id: \.self) { value in
                                 Text(value)
                                     .tag(value)
                             }
-                            if getAttributeValues(a).isEmpty {
-                                Text("No presets. \(self.bob.attributeList[a].restrictPresets ? "Create some in the attribute menu!" : "Create a new value in the text box!")")
-                                    .multilineTextAlignment(.center)
-                            }
                         }
-                        .onChange(of: self.newValue, perform: { value in
-                            let name = self.bob.attributeList[a].name ?? ""
-                            self.attributes[name] = value
-                        })
+                        if getPresets(a).isEmpty {
+                            Text("No presets. \(self.bob.attributeList[a].restrictPresets ? "Create some in the attribute menu!" : "Create a new value in the text box!")")
+                                .multilineTextAlignment(.center)
+                        }
+                        Picker("", selection: self.$newValue) {
+                            Text("None")
+                                .tag("")
+                        }
                     } label: {
                         Image(systemName: "chevron.down.circle")
                             .imageScale(.large)
                             .foregroundColor(PersistenceController.themeColor)
                     }
+                    .onChange(of: self.newValue, perform: { value in
+                        setValue(value)
+                    })
                 }
             }
             
@@ -305,10 +414,16 @@ struct AttrValueSetter: View {
                             
                             // Number Editor
                             TextField(self.getRangeText(), text: self.$newValue, onCommit: {
+                                // Empty
+                                if newValue.isEmpty {
+                                    setValue("")
+                                    return
+                                }
                                 // Reject if not a number
                                 if Double(self.newValue) == nil {
                                     self.newValue = ""
                                     self.displayOutOfRangeWarning.toggle()
+                                    setValue("")
                                     return
                                 }
                                 // Turn to integer if decimals are not allowed
@@ -335,8 +450,7 @@ struct AttrValueSetter: View {
                                     self.newValue = ""
                                     self.displayOutOfRangeWarning.toggle()
                                 }
-                                let name = self.bob.attributeList[a].name ?? ""
-                                self.attributes[name] = self.newValue
+                                setValue(self.newValue)
                             })
                             .onChange(of: self.newValue, perform: { value in
                                 // Reject if not a number
@@ -363,8 +477,7 @@ struct AttrValueSetter: View {
                                 else if (Double(value)! >= self.bob.attributeList[a].maxNum) && !self.bob.attributeList[a].maxIncluded {
                                     return
                                 }
-                                let name = self.bob.attributeList[a].name ?? ""
-                                self.attributes[name] = value
+                                setValue(value)
                             })
                             .keyboardType(.numbersAndPunctuation)
                             .multilineTextAlignment(.trailing)
@@ -401,13 +514,57 @@ struct AttrValueSetter: View {
                     }
                     .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     .onChange(of: self.newValue, perform: { value in
-                        let name = self.bob.attributeList[a].name ?? ""
-                        self.attributes[name] = value
+                        setValue(value)
                     })
+            }
+            
+            // Date
+            else if bob.attributeList[a].type == 3 {
+                
+                HStack {
+                    let formatter = ISO8601DateFormatter()
+                    if let date = formatter.date(from: self.newValue) {
+                        DatePicker(selection: Binding(
+                            get: {
+                                return date
+                            },
+                            set: { date in
+                                self.newValue = formatter.string(from: date)
+                            }
+                        ), displayedComponents: .date) {
+                            Text("")
+                        }
+                        .datePickerStyle(CompactDatePickerStyle())
+                        .accentColor(PersistenceController.themeColor)
+                        Button {
+                            self.newValue = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(Color(UIColor.tertiaryLabel))
+                                .imageScale(.small)
+                        }
+                    } else {
+                        Button {
+                            self.newValue = formatter.string(from: Date())
+                        } label: {
+                            Text("Date")
+                                .foregroundColor(Color(UIColor.tertiaryLabel))
+                                .padding(7)
+                                .background(Color(UIColor.tertiarySystemFill).cornerRadius(7))
+                        }
+                    }
+                }
+                .onChange(of: self.newValue, perform: { value in
+                    print(value)
+                    setValue(value)
+                })
             }
         }
         .onAppear {
-            self.newValue = self.attributes[self.bob.attributeList[a].name ?? ""] ?? ""
+            // Set the current value
+            let value = self.attributes[self.bob.attributeList[a].name ?? ""] ?? ""
+            let values = split(value)
+            self.newValue = index < values.count ? values[index] : ""
             
             // Set all booleans to false
             if self.bob.attributeList[a].type == 2 && self.attributes[self.bob.attributeList[a].name ?? ""] == nil {
@@ -416,13 +573,40 @@ struct AttrValueSetter: View {
         }
     }
     
-    func getAttributeValues(_ attribute: Int) -> [String] {
+    func setValue(_ value: String) {
+        let attribute = self.bob.attributeList[a]
+        if attribute.allowMultiple {
+            var values = split(self.attributes[attribute.name ?? ""] ?? "")
+            while index >= values.count {
+                values.append("")
+            }
+            values[index] = value
+            if attribute.maxCount != 0 {
+                while values.count > attribute.maxCount {
+                    values.removeLast()
+                }
+            }
+            self.attributes[attribute.name ?? ""] = join(values)
+        } else {
+            self.attributes[attribute.name ?? ""] = value
+        }
+    }
+    
+    func split(_ value: String) -> [String] {
+        return value.components(separatedBy: CharacterSet(charactersIn: String(Constants.delimiter)))
+    }
+    func join(_ values: [String]) -> String {
+        return values.joined(separator: String(Constants.delimiter))
+    }
+    
+    func getPresets(_ attribute: Int) -> [String] {
         var presets = self.bob.attributeList[attribute].presets?.filter { !$0.isEmpty } ?? []
         let name = self.bob.attributeList[attribute].name ?? ""
         for bit in bob.bitArray {
-            let value = bit.attributes?[name] ?? ""
-            if !presets.contains(value) && value != "" {
-                presets += [value]
+            for value in bit.allAttributeValues(name) {
+                if !presets.contains(value) && value != "" {
+                    presets += [value]
+                }
             }
         }
         return presets

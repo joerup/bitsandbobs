@@ -16,9 +16,6 @@ struct BobEditor: View {
     @State var image = UIImage()
     @State var attributes: [Attribute] = []
     @State var listType: Int = 0
-    @State var displayBitIcon = false
-    @State var displayBitImgList: Int = 0
-    @State var displayBitDescList = true
     
     @State var create = true
     
@@ -29,6 +26,8 @@ struct BobEditor: View {
     @State private var newAttributeText = false
     @State private var newAttributeNum = false
     @State private var newAttributeBool = false
+    @State private var newAttributeDate = false
+    
     @State private var editAttributes = false
     @State private var editAttribute: Attribute? = nil
     
@@ -76,7 +75,7 @@ struct BobEditor: View {
                             .multilineTextAlignment(.trailing)
                     }
                     Picker("Collection Type", selection: self.$listType) {
-                        Text("List")
+                        Text("Basic")
                             .tag(0)
                         Text("Checklist")
                             .tag(1)
@@ -92,27 +91,6 @@ struct BobEditor: View {
                         .lineLimit(0)
                         .font(.callout)
                     Spacer()
-                    Menu {
-                        Button {
-                            self.newAttributeText.toggle()
-                        } label: {
-                            Text("Text").textCase(nil)
-                        }
-                        Button {
-                            self.newAttributeNum.toggle()
-                        } label: {
-                            Text("Number").textCase(nil)
-                        }
-                        Button {
-                            self.newAttributeBool.toggle()
-                        } label: {
-                            Text("Boolean").textCase(nil)
-                        }
-                    } label: {
-                        Text("New")
-                            .font(.callout)
-                            .foregroundColor(PersistenceController.themeColor)
-                    }
                     if !attributes.isEmpty {
                         Button(action: {
                             self.editAttributes.toggle()
@@ -123,7 +101,9 @@ struct BobEditor: View {
                         }
                         .padding(.leading)
                     }
-                }) {
+                },
+                    footer: Text("Each item in the collection can be given a value for each attribute.")
+                ) {
                     ForEach(self.attributes, id: \.self) { attribute in
                         Button(action: {
                             self.editAttribute = attribute
@@ -142,35 +122,36 @@ struct BobEditor: View {
                     .onMove(perform: moveAttributes)
                     .onDelete(perform: removeAttributes)
                     
-                    if self.attributes.isEmpty {
-                        Text("")
+                    Menu {
+                        Button {
+                            self.newAttributeText.toggle()
+                        } label: {
+                            Text("Text").textCase(nil)
+                        }
+                        Button {
+                            self.newAttributeNum.toggle()
+                        } label: {
+                            Text("Number").textCase(nil)
+                        }
+                        Button {
+                            self.newAttributeBool.toggle()
+                        } label: {
+                            Text("Boolean").textCase(nil)
+                        }
+//                        Button {
+//                            self.newAttributeDate.toggle()
+//                        } label: {
+//                            Text("Date").textCase(nil)
+//                        }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "plus")
+                                .font(.callout.weight(.semibold))
+                                .foregroundColor(PersistenceController.themeColor)
+                            Spacer()
+                        }
                     }
-                }
-                
-                Section {
-                    
-                    Picker("Item Icon in List", selection: self.$displayBitImgList) {
-                        Text("Large")
-                            .tag(1)
-                        Text("Small")
-                            .tag(0)
-                        Text("None") 
-                            .tag(2)
-                    }
-                    .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
-                    
-                    Toggle("Item Description in List", isOn: self.$displayBitDescList)
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                    
-                    Picker("Display in Item Page", selection: self.$displayBitIcon) {
-                        Text("Full Image")
-                            .tag(false)
-                        Text("Icon")
-                            .tag(true)
-                    }
-                    .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
                 }
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
@@ -182,6 +163,9 @@ struct BobEditor: View {
             }
             .sheet(isPresented: self.$newAttributeBool) {
                 AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 2)
+            }
+            .sheet(isPresented: self.$newAttributeDate) {
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 3)
             }
             .sheet(item: self.$editAttribute) { attribute in
                 AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, create: false)
@@ -217,7 +201,7 @@ struct BobEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(PersistenceController.themeColor)
+                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the collection a name."))
@@ -227,18 +211,14 @@ struct BobEditor: View {
         }
         .interactiveDismissDisabled()
         .onAppear {
-            if bob != nil {
-                self.create = false
-                self.name = bob!.name ?? ""
-                self.desc = bob!.desc ?? ""
-                self.image = bob!.image != nil ? UIImage(data: bob!.image!)! : UIImage()
-                self.attributes = bob!.attributeList
-                self.nextAttrID = bob!.nextAttrID
-                self.listType = Int(bob!.listType)
-                self.displayBitIcon = bob!.displayBitIcon
-                self.displayBitImgList = Int(bob!.displayBitImgList)
-                self.displayBitDescList = bob!.displayBitDescList
-            }
+            guard let bob else { return }
+            self.create = false
+            self.name = bob.name ?? ""
+            self.desc = bob.desc ?? ""
+            self.image = bob.image != nil ? UIImage(data: bob.image!)! : UIImage()
+            self.attributes = bob.attributeList
+            self.nextAttrID = bob.nextAttrID
+            self.listType = Int(bob.listType)
         }
     }
     
@@ -274,6 +254,12 @@ struct BobEditor: View {
             }
             string += "Boolean"
         }
+        else if attribute.type == 3 {
+            string += "Date"
+        }
+        if attribute.allowMultiple {
+            string += " (Multiple)"
+        }
         return string
     }
 
@@ -297,9 +283,6 @@ struct BobEditor: View {
             bob.attributes = NSSet(array: self.attributes)
             bob.nextAttrID = self.nextAttrID
             bob.listType = Int16(self.listType)
-            bob.displayBitIcon = self.displayBitIcon
-            bob.displayBitImgList = Int16(self.displayBitImgList)
-            bob.displayBitDescList = self.displayBitDescList
             
         }
         else if bob != nil {
@@ -311,9 +294,6 @@ struct BobEditor: View {
                 bob!.attributes = NSSet(array: self.attributes)
                 bob!.nextAttrID = self.nextAttrID
                 bob!.listType = Int16(self.listType)
-                bob!.displayBitIcon = self.displayBitIcon
-                bob!.displayBitImgList = Int16(self.displayBitImgList)
-                bob!.displayBitDescList = self.displayBitDescList
             }
         }
         

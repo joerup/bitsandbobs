@@ -13,16 +13,54 @@ struct BitsBobsApp: App {
     let persistenceController = PersistenceController.shared
     
     @Environment(\.scenePhase) var scenePhase
-    @Environment(\.managedObjectContext) var managedObjectContext
 
     var body: some Scene {
         WindowGroup {
-            ListView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            VStack {
+                BobList()
+            }
+            .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            .onAppear {
+                updateExistingData()
+            }
         }
         .onChange(of: scenePhase) { _ in
             persistenceController.save()
         }
+    }
+
+    // Update existing data to new formats
+    private func updateExistingData() {
+        
+        // Get the stored version
+        let modelVersion = UserDefaults.standard.integer(forKey: "modelVersion")
+        
+        // Get the context
+        let context = persistenceController.container.viewContext
+        
+        // 1.4.0
+        if modelVersion < 1 {
+            
+            // Get all the bobs
+            let fetchRequest: NSFetchRequest<Bob> = Bob.fetchRequest()
+            do {
+                let bobs = try context.fetch(fetchRequest)
+                for bob in bobs {
+                    // Compress all bit images to icons
+                    for bit in bob.bitArray {
+                        if let image = bit.image, bit.icon == nil {
+                            bit.icon = image.compressed()
+                        }
+                    }
+                }
+                try context.save()
+            } catch {
+                print(error)
+            }
+        }
+        
+        // Save the current version
+        UserDefaults.standard.set(1, forKey: "modelVersion")
     }
 }
 
