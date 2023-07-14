@@ -69,7 +69,7 @@ struct BobView: View {
                             .aspectRatio(contentMode: .fill)
                             .blur(radius: 1)
                             .frame(height: UIScreen.main.bounds.height*0.15)
-                            .cornerRadius(10)
+                            .cornerRadius(20)
                             .padding(10)
                         
                         VStack {
@@ -670,7 +670,7 @@ struct BobView: View {
     private func attributeValueText(attribute: Attribute, value: String) -> String {
         let value = BitList.editValueName(value, attribute: attribute)
         switch attribute.type {
-        case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : "\(attribute.name ?? ""): \(value)"
+        case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : value
         default: return value
         }
     }

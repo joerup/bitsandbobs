@@ -63,9 +63,9 @@ struct BobList: View {
                                         Image(uiImage: bob.image != nil ? UIImage(data: bob.image!) ?? UIImage(named: "") ?? UIImage() : UIImage(named: "") ?? UIImage())
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
-                                            .blur(radius: 2)
+                                            .blur(radius: 1)
                                             .frame(height: UIScreen.main.bounds.height*0.15)
-                                            .cornerRadius(10)
+                                            .cornerRadius(20)
 
                                         VStack {
                                             Text(bob.name ?? "")
@@ -89,16 +89,6 @@ struct BobList: View {
                                             }
                                         }
                                         .frame(height: UIScreen.main.bounds.height*0.15)
-
-                                        HStack {
-                                            Spacer()
-                                            Image(systemName: "chevron.forward")
-                                                .font(.body.bold())
-                                                .dynamicTypeSize(...DynamicTypeSize.xLarge)
-                                                .foregroundColor(.white)
-                                                .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
-                                                .padding()
-                                        }
                                     }
                                 }
                             }

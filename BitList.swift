@@ -109,7 +109,7 @@ struct BitList: View {
                             .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                         Spacer()
                     }
-                    .padding()
+                    .padding(10)
                 }
             }
         }
@@ -297,14 +297,11 @@ struct BitList: View {
         if attribute?.type == 1 && Double(value) != nil {
             return editAttributeNumber(value, attribute: attribute)
         }
-        else if attribute?.type == 2 && attribute?.boolType == 1 {
-            switch value {
-            case "True":
-                return "Yes"
-            case "False":
-                return "No"
-            default:
-                return value
+        else if attribute?.type == 2 {
+            if attribute?.boolType == 1 {
+                return "\(attribute?.displayName ?? ""): \(value == "True" ? "Yes" : "No")"
+            } else {
+                return "\(attribute?.displayName ?? ""): \(value)"
             }
         }
         return value

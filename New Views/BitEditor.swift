@@ -392,7 +392,7 @@ struct AttrValueSetter: View {
                             }
                             
                             // Number Display
-                            Text(self.newValue != "" ? self.newValue : self.getRangeText())
+                            Text(self.newValue != "" ? self.newValue : bob.attributeList[a].displayName ?? "")
                                 .multilineTextAlignment(.trailing)
                                 .lineLimit(0)
                                 .opacity(0)
@@ -413,7 +413,7 @@ struct AttrValueSetter: View {
                             }
                             
                             // Number Editor
-                            TextField(self.getRangeText(), text: self.$newValue, onCommit: {
+                            TextField(bob.attributeList[a].displayName ?? "", text: self.$newValue, onCommit: {
                                 // Empty
                                 if newValue.isEmpty {
                                     setValue("")
