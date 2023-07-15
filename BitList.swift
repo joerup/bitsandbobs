@@ -122,8 +122,8 @@ struct BitList: View {
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitRow(bit: bit)
                 }
-                .padding(display == .smallList ? 5 : 8)
-                .padding(.leading, 2)
+                .padding(.vertical, display == .smallList ? 5 : 8)
+                .padding(.horizontal, 10)
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(15)
             }
@@ -132,12 +132,11 @@ struct BitList: View {
     
     @ViewBuilder
     private func grid(name: String, bits: [Bit], size: CGSize) -> some View {
-        let count = (size.width-50) / (display == .smallGrid ? (mediumIconSize*1.1) : (largeIconSize*1.1))
+        let count = (size.width-50) / (display == .smallGrid ? (mediumIconSize+4) : (largeIconSize+5))
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: Int(count))) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitGridItem(bit: bit, size: count/floor(count) * (display == .smallGrid ? mediumIconSize : largeIconSize))
-                        .padding(.horizontal, 2)
                 }
             }
         }
@@ -159,7 +158,6 @@ struct BitList: View {
                 }
                 .frame(width: smallIconSize*0.7, height: smallIconSize, alignment: .center)
                 .padding(.trailing, -2)
-                .padding(.leading, 2)
             }
 
             icon(bit: bit, size: display == .smallList ? smallIconSize : mediumIconSize)
@@ -207,7 +205,6 @@ struct BitList: View {
             Image(systemName: "chevron.forward")
                 .foregroundColor(Color(uiColor: .quaternaryLabel))
                 .imageScale(.small)
-                .padding(.trailing, 2)
         }
         .id(update)
     }
