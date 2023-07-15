@@ -85,7 +85,7 @@ struct BitList: View {
                                 }
                                 .transition(.opacity)
                                 .padding(.horizontal, 15)
-                                .padding(.bottom, 5)
+                                .padding(.bottom, 7)
                                 .padding(.top, 15)
                             ) {
                                 if !bits.isEmpty {
@@ -115,31 +115,35 @@ struct BitList: View {
         }
     }
     
+    @ViewBuilder
     private func list(name: String, bits: [Bit], size: CGSize) -> some View {
         VStack(spacing: 3) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitRow(bit: bit)
                 }
-                .padding(5)
-                .padding(.horizontal, 5)
+                .padding(display == .smallList ? 5 : 8)
+                .padding(.leading, 2)
                 .background(Color(UIColor.systemGray6))
-                .cornerRadius(10)
+                .cornerRadius(15)
             }
         }
     }
     
+    @ViewBuilder
     private func grid(name: String, bits: [Bit], size: CGSize) -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: Int((size.width-50) / (display == .smallGrid ? (mediumIconSize+4) : (largeIconSize+4))))) {
+        let count = (size.width-50) / (display == .smallGrid ? (mediumIconSize*1.1) : (largeIconSize*1.1))
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: Int(count))) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
-                    bitGridItem(bit: bit)
+                    bitGridItem(bit: bit, size: count/floor(count) * (display == .smallGrid ? mediumIconSize : largeIconSize))
+                        .padding(.horizontal, 2)
                 }
             }
         }
         .padding(10)
         .background(Color(UIColor.systemGray6))
-        .cornerRadius(10)
+        .cornerRadius(15)
     }
     
     private func bitRow(bit: Bit) -> some View {
@@ -154,6 +158,8 @@ struct BitList: View {
                         .minimumScaleFactor(0.5)
                 }
                 .frame(width: smallIconSize*0.7, height: smallIconSize, alignment: .center)
+                .padding(.trailing, -2)
+                .padding(.leading, 2)
             }
 
             icon(bit: bit, size: display == .smallList ? smallIconSize : mediumIconSize)
@@ -201,27 +207,30 @@ struct BitList: View {
             Image(systemName: "chevron.forward")
                 .foregroundColor(Color(uiColor: .quaternaryLabel))
                 .imageScale(.small)
+                .padding(.trailing, 2)
         }
         .id(update)
     }
     
-    private func bitGridItem(bit: Bit) -> some View {
+    private func bitGridItem(bit: Bit, size: CGFloat) -> some View {
         VStack {
             ZStack(alignment: .bottomTrailing) {
-                icon(bit: bit, size: display == .smallGrid ? mediumIconSize : largeIconSize)
+                icon(bit: bit, size: size)
                 
                 if bob.listType == 1 {
-                    Check(bob: bob, bit: bit, update: $update, scaleFactor: display == .smallGrid ? mediumIconSize/largeIconSize : 1)
+                    Check(bob: bob, bit: bit, update: $update, scaleFactor: size/80)
                 }
                 if bob.listType == 2 {
                     VStack {
+                        Spacer()
                         Text(String(bit.order+1))
                             .font(.system(bit.order < 9 ? .title : .title2, design: .rounded).weight(.black))
                             .foregroundColor(.white)
                             .minimumScaleFactor(0.5)
                             .shadow(color: .secondary, radius: 5)
+                            .scaleEffect(display == .smallGrid ? 0.7 : 0.9)
                     }
-                    .frame(width: smallIconSize, height: smallIconSize, alignment: .center)
+                    .frame(width: size, height: size, alignment: .center)
                 }
             }
             
@@ -231,7 +240,7 @@ struct BitList: View {
                     .foregroundColor(Color(bob.listType != 1 || bit.checked ? UIColor.label : UIColor.systemGray))
                     .tracking(-0.5)
                     .lineLimit(0)
-                    .frame(maxWidth: largeIconSize)
+                    .frame(maxWidth: size)
                     .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
             }
         }
