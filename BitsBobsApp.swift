@@ -24,9 +24,6 @@ struct BitsBobsApp: App {
                 updateExistingData()
             }
         }
-        .onChange(of: scenePhase) { _ in
-            persistenceController.save()
-        }
     }
 
     // Update existing data to new formats

@@ -16,6 +16,24 @@ struct Check: View {
     
     var scaleFactor: CGFloat = 1.0
     
+    var body: some View {
+        Checkmark(checked: bit.checked, scaleFactor: scaleFactor) {
+            let revisedItems: [Bit] = bob.bitArray.map{ $0 }
+            revisedItems[Int(bit.order)].checked.toggle()
+            bob.bits = NSSet(array: revisedItems)
+            PersistenceController.shared.save()
+            update.toggle()
+        }
+    }
+}
+
+struct Checkmark: View {
+    
+    var checked: Bool
+    var scaleFactor: CGFloat = 1.0
+    
+    var action: () -> Void
+    
     private var size: CGFloat {
         return 32 * scaleFactor
     }
@@ -23,9 +41,9 @@ struct Check: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(self.bit.checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
+                .fill(checked ? PersistenceController.themeColor : Color(UIColor.systemGray5))
                 .frame(width: size, height: size)
-            if self.bit.checked {
+            if checked {
                 Image(systemName: "checkmark")
                     .font(.system(size: size*7/16, weight: .black))
                     .foregroundColor(.white)
@@ -39,12 +57,6 @@ struct Check: View {
             RoundedRectangle(cornerRadius: size)
                 .stroke(Color(uiColor: .systemGray5), lineWidth: size/15)
         )
-        .onTapGesture {
-            let revisedItems: [Bit] = bob.bitArray.map{ $0 }
-            revisedItems[Int(bit.order)].checked.toggle()
-            bob.bits = NSSet(array: revisedItems)
-            PersistenceController.shared.save()
-            update.toggle()
-        }
+        .onTapGesture(perform: action)
     }
 }

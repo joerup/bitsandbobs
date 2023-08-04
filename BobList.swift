@@ -89,6 +89,7 @@ struct BobList: View {
                                             }
                                         }
                                         .frame(height: UIScreen.main.bounds.height*0.15)
+                                        .padding(.horizontal)
                                     }
                                 }
                             }

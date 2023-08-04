@@ -51,8 +51,8 @@ struct BobView: View {
 
         GeometryReader { geometry in
             
-            VStack(spacing: 0) {
-
+            ScrollView {
+                
                 VStack(spacing: 0) {
                     
                     ZStack {
@@ -81,7 +81,7 @@ struct BobView: View {
                                 .minimumScaleFactor(0.2)
                                 .foregroundColor(bob.image != nil ? Color(UIColor.white) : Color(UIColor.label))
                                 .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
-
+                            
                             if bob.desc != nil && bob.desc != "" {
                                 Text(bob.desc ?? "")
                                     .font(.system(.headline, design: .rounded).weight(.heavy))
@@ -94,7 +94,7 @@ struct BobView: View {
                             }
                         }
                         .frame(height: UIScreen.main.bounds.height*0.15)
-                        .padding(.horizontal, 10)
+                        .padding(.horizontal)
                     }
                     
                     if showSearch {
@@ -244,7 +244,7 @@ struct BobView: View {
                     }
                     
                     HStack {
-                            
+                        
                         Menu {
                             Picker("", selection: self.$display) {
                                 ForEach(ListType.allCases, id: \.rawValue) { type in
@@ -341,6 +341,7 @@ struct BobView: View {
                     
                     BitList(
                         bob: bob,
+                        size: geometry.size,
                         groups: groups,
                         bitLists: bitLists,
                         display: display,

@@ -17,7 +17,7 @@ struct PersistenceController {
     // Storage for Core Data
     let container: NSPersistentContainer
     
-    // Color - 204, 153, 77   #cc994d
+    // Color 
     static let themeColor = Color.init(red: 0.8, green: 0.6, blue: 0.3)
     
     // Next Bob ID

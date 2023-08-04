@@ -17,6 +17,8 @@ struct BitList: View {
     
     var bob: Bob
     
+    var size: CGSize
+    
     var groups: [String]
     var bitLists: [String: [Bit]]
     
@@ -48,8 +50,8 @@ struct BitList: View {
     }
     
     var body: some View {
-        
-        GeometryReader { geometry in
+            
+        Group {
             
             if self.bob.bitArray.isEmpty {
                 HStack {
@@ -62,62 +64,60 @@ struct BitList: View {
                 }
             } else {
                 
-                ScrollView {
+                VStack(spacing: 0) {
                     
-                    VStack(spacing: 0) {
+                    ForEach(self.groups, id: \.self) { group in
                         
-                        ForEach(self.groups, id: \.self) { group in
-                            
-                            let name = BitList.editValueName(group, attribute: groupAttribute)
-                            let bits = self.bitLists[group] ?? []
-                            
-                            Section(header: name.isEmpty ? nil :
-                                HStack(alignment: .bottom) {
-                                    Text(name)
-                                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                                        .foregroundColor(Color(uiColor: .secondaryLabel))
-                                        .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
-                                    Spacer()
-                                    Text(bitCountText(bits: bits))
-                                        .font(.system(.footnote, design: .rounded, weight: .medium))
-                                        .foregroundColor(Color(uiColor: .tertiaryLabel))
-                                        .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
-                                }
-                                .transition(.opacity)
-                                .padding(.horizontal, 15)
-                                .padding(.bottom, 7)
-                                .padding(.top, 15)
-                            ) {
-                                if !bits.isEmpty {
-                                    switch display {
-                                    case .smallList, .largeList:
-                                        list(name: name, bits: bits, size: geometry.size)
-                                    case .smallGrid, .largeGrid:
-                                        grid(name: name, bits: bits, size: geometry.size)
-                                    }
+                        let name = BitList.editValueName(group, attribute: groupAttribute)
+                        let bits = self.bitLists[group] ?? []
+                        
+                        Section(header: name.isEmpty ? nil :
+                                    HStack(alignment: .bottom) {
+                            Text(name)
+                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                .foregroundColor(Color(uiColor: .secondaryLabel))
+                                .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
+                            Spacer()
+                            Text(bitCountText(bits: bits))
+                                .font(.system(.footnote, design: .rounded, weight: .medium))
+                                .foregroundColor(Color(uiColor: .tertiaryLabel))
+                                .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                        }
+                        .transition(.opacity)
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 7)
+                        .padding(.top, 15)
+                        ) {
+                            if !bits.isEmpty {
+                                switch display {
+                                case .smallList, .largeList:
+                                    list(name: name, bits: bits, size: size)
+                                case .smallGrid, .largeGrid:
+                                    grid(name: name, bits: bits, size: size)
                                 }
                             }
                         }
                     }
-                    .padding(.horizontal, 10)
-                    
-                    HStack {
-                        Spacer()
-                        Text("\(displayedBitCountText(bits: bob.bitArray))")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(Color(UIColor.systemGray2))
-                            .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
-                        Spacer()
-                    }
-                    .padding(10)
                 }
+                .padding(.horizontal, 10)
+                
+                HStack {
+                    Spacer()
+                    Text("\(displayedBitCountText(bits: bob.bitArray))")
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        .foregroundColor(Color(UIColor.systemGray2))
+                        .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
+                    Spacer()
+                }
+                .padding(15)
             }
         }
+        .onChange(of: update) { _ in }
     }
     
     @ViewBuilder
     private func list(name: String, bits: [Bit], size: CGSize) -> some View {
-        VStack(spacing: 3) {
+        LazyVStack(spacing: 3) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitRow(bit: bit)

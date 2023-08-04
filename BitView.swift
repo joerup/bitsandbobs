@@ -56,7 +56,7 @@ struct BitView: View {
                                 }
                                 else {
                                     Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                         .cornerRadius(20)
                                         .padding(10)
                                 }
@@ -135,6 +135,7 @@ struct BitView: View {
                                             .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
                                     }
                                 }
+                                .padding(.horizontal)
                                 
                                 Spacer()
                                 
@@ -225,6 +226,7 @@ struct BitView: View {
                 let newBits = self.bob.bitArray
                 let bit = newBits[Int(bit.order)]
                 self.bit = bit
+                update.toggle()
             }
         }
     }

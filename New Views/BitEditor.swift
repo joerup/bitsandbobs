@@ -77,6 +77,19 @@ struct BitEditor: View {
                     }
                 }
                 
+                if bob.listType == 1 {
+                    Section {
+                        HStack {
+                            Text("Check")
+                            Spacer()
+                            Checkmark(checked: checked) {
+                                self.checked.toggle()
+                            }
+                            .padding(.vertical, 3)
+                        }
+                    }
+                }
+                
                 Section(header: Text("Tags").font(.callout)) {
                     WrappingHStack(0...self.tags.count, id: \.self) { t in
                         ZStack(alignment: .topTrailing) {
