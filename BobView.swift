@@ -112,6 +112,7 @@ struct BobView: View {
                                     }
                                 }
                             })
+                            .disableAutocorrection(true)
                             .fontWeight(.regular)
                             .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                             .padding(.horizontal, 7)
