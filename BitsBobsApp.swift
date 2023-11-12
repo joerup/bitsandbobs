@@ -12,6 +12,8 @@ struct BitsBobsApp: App {
     
     let persistenceController = PersistenceController.shared
     
+    @StateObject private var premium: Premium = Premium()
+    
     @Environment(\.scenePhase) var scenePhase
 
     var body: some Scene {
@@ -20,17 +22,22 @@ struct BitsBobsApp: App {
                 BobList()
             }
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            .environmentObject(premium)
             .onAppear {
                 updateExistingData()
+            }
+            .task {
+                await premium.update()
             }
         }
     }
 
     // Update existing data to new formats
     private func updateExistingData() {
+        let currentVersion = 2
         
         // Get the stored version
-        let modelVersion = UserDefaults.standard.integer(forKey: "modelVersion")
+        let modelVersion = (UserDefaults.standard.value(forKey: "modelVersion") as? Int) ?? currentVersion
         
         // Get the context
         let context = persistenceController.container.viewContext
@@ -56,8 +63,15 @@ struct BitsBobsApp: App {
             }
         }
         
+        // 1.4.3
+        if modelVersion < 2 {
+            
+            // Give Premium Version for free
+            UserDefaults.standard.setValue(true, forKey: "premiumActivated")
+        }
+        
         // Save the current version
-        UserDefaults.standard.set(1, forKey: "modelVersion")
+        UserDefaults.standard.set(currentVersion, forKey: "modelVersion")
     }
 }
 

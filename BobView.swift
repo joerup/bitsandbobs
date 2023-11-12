@@ -384,11 +384,12 @@ struct BobView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
+                Button {
                     self.newBit.toggle()
-                }, label: {
+                } label: {
                     Image(systemName: "plus")
-                })
+                        .fontWeight(.bold)
+                }
             }
         }
         .onAppear {

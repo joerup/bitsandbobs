@@ -17,8 +17,8 @@ struct PersistenceController {
     // Storage for Core Data
     let container: NSPersistentContainer
     
-    // Color 
-    static let themeColor = Color.init(red: 0.8, green: 0.6, blue: 0.3)
+    // Color
+    static let themeColor = Color.init(red: 255/255, green: 164/255, blue: 27/255)
     
     // Next Bob ID
     static var nextBobID: Int16 = Int16(UserDefaults.standard.integer(forKey: "nextBobID")) {

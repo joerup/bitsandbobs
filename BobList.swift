@@ -11,6 +11,8 @@ struct BobList: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
     
+    @EnvironmentObject var premium: Premium
+    
     @FetchRequest(
         entity: Bob.entity(),
         sortDescriptors: [
@@ -22,6 +24,7 @@ struct BobList: View {
     @State private var editBobs = false
     
     @State private var showSettings = false
+    @State private var showPremium = false
     
     @State private var search = ""
 
@@ -106,9 +109,9 @@ struct BobList: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
+                        Button {
                             self.showSettings.toggle()
-                        }) {
+                        } label: {
                             Image(systemName: "gearshape.fill")
                         }
                     }
@@ -122,19 +125,27 @@ struct BobList: View {
                         }
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            self.newBob.toggle()
-                        }, label: {
+                        Button {
+                            if bobs.count > 0 && !premium.isActive {
+                                self.showPremium.toggle()
+                            } else {
+                                self.newBob.toggle()
+                            }
+                        } label: {
                             Image(systemName: "plus")
-                        })
+                                .fontWeight(.bold)
+                        }
                     }
                 }
                 .sheet(isPresented: self.$showSettings) {
                     SettingsView()
                 }
-                .sheet(isPresented: self.$newBob, content: {
+                .sheet(isPresented: self.$showPremium) {
+                    PremiumView()
+                }
+                .sheet(isPresented: self.$newBob) {
                     BobEditor()
-                })
+                }
                 
                 Text("Select a category.")
                     .padding()

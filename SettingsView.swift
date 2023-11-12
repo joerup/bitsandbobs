@@ -15,8 +15,10 @@ struct SettingsView: View {
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
     
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var premium: Premium
     
-    @State var presentShare = false
+    @State private var presentShare = false
+    @State private var presentStore = false
     
     var body: some View {
         
@@ -27,21 +29,41 @@ struct SettingsView: View {
                 List {
                     
                     Section {
-                        Button(action: {
-                            getSampleBobs()
-                        }) {
-                            row("Generate Sample Collections")
+                        if premium.isActive {
+                            HStack {
+                                Text("Premium")
+                                Spacer()
+                                Text("Unlocked")
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            Button {
+                                self.presentStore.toggle()
+                            } label: {
+                                row("Premium")
+                            }
+                            .sheet(isPresented: $presentStore) {
+                                PremiumView()
+                            }
                         }
                     }
                     
+//                    Section {
+//                        Button {
+//                            getSampleBobs()
+//                        } label: {
+//                            row("Generate Sample Collections")
+//                        }
+//                    }
+                    
                     Section {
-                        Link(destination: URL(string: "https://www.bitsandbobs.app")!) {
+                        Link(destination: URL(string: "https://www.joerup.com/bitsandbobs")!) {
                             row("Website")
                         }
-                        Link(destination: URL(string: "https://www.bitsandbobs.app/support")!) {
+                        Link(destination: URL(string: "https://www.joerup.com/bitsandbobs/support")!) {
                             row("Support")
                         }
-                        Link(destination: URL(string: "https://www.bitsandbobs.app/privacy")!) {
+                        Link(destination: URL(string: "https://www.joerup.com/bitsandbobs/privacy")!) {
                             row("Privacy Policy")
                         }
                     }
@@ -67,8 +89,6 @@ struct SettingsView: View {
                     Section {
                         HStack {
                             Text("Version")
-                                .font(.headline.weight(.medium))
-                                .foregroundColor(.secondary)
                             Spacer()
                             Text(appVersion ?? "")
                         }
@@ -97,8 +117,6 @@ struct SettingsView: View {
         NavigationLink(destination: EmptyView()) {
             HStack {
                 Text(text)
-                    .font(.headline.weight(.medium))
-                    .foregroundColor(.secondary)
                 Spacer()
             }
         }
