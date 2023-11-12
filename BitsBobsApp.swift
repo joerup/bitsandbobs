@@ -12,6 +12,8 @@ struct BitsBobsApp: App {
     
     let persistenceController = PersistenceController.shared
     
+    @StateObject private var premium: Premium = Premium()
+    
     @Environment(\.scenePhase) var scenePhase
 
     var body: some Scene {
@@ -20,8 +22,12 @@ struct BitsBobsApp: App {
                 BobList()
             }
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            .environmentObject(premium)
             .onAppear {
                 updateExistingData()
+            }
+            .task {
+                await premium.update()
             }
         }
     }
