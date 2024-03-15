@@ -10,6 +10,8 @@ import SwiftUI
 struct BobList: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
+    @Environment(\.requestReview) private var requestReview
+    @AppStorage("reviewOpens") private var reviewOpens: Int = 0
     
     @EnvironmentObject var premium: Premium
     
@@ -152,6 +154,18 @@ struct BobList: View {
             }
             .accentColor(PersistenceController.themeColor)
             .phoneOnlyStackNavigationView(geometry)
+            .onAppear {
+                if !premium.isActive, Int.random(in: 1...5) == 5 {
+                    showPremium = true
+                }
+                else {
+                    reviewOpens += 1
+                    if reviewOpens >= 10 {
+                        requestReview()
+                        reviewOpens = 0
+                    }
+                }
+            }
         }
     }
 }
