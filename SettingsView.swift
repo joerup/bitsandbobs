@@ -48,13 +48,13 @@ struct SettingsView: View {
                         }
                     }
                     
-                    Section {
-                        Button {
-                            Samples.getSamples()
-                        } label: {
-                            row("Generate Sample Collections")
-                        }
-                    }
+//                    Section {
+//                        Button {
+//                            Samples.getSamples()
+//                        } label: {
+//                            row("Generate Sample Collections")
+//                        }
+//                    }
                     
                     Section {
                         Link(destination: URL(string: "https://www.joerup.com/bitsandbobs")!) {
