@@ -11,7 +11,7 @@ struct Icon: View {
     
     var image: UIImage?
     var size: CGFloat
-    var square: Bool = false
+    var rectangle: Bool = false
     var faded: Bool = false
     
     var body: some View {
@@ -25,11 +25,11 @@ struct Icon: View {
                 Color(uiColor: .quaternarySystemFill)
             }
         }
-        .frame(width: self.size, height: self.size)
-        .cornerRadius(!square ? size : 20)
+        .frame(width: (!rectangle ? 1 : 2.5) * self.size, height: self.size)
+        .cornerRadius(!rectangle ? size : 20)
         .opacity(!faded ? 1 : 0.5)
         .overlay(
-            RoundedRectangle(cornerRadius: !square ? size : 20)
+            RoundedRectangle(cornerRadius: !rectangle ? size : 20)
                 .stroke(Color(uiColor: image == nil ? .systemGray5 : .systemGray4), lineWidth: size <= 50 ? size/15 : size <= 100 ? size/20 : size/30)
         )
     }

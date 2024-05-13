@@ -34,7 +34,6 @@ class Samples {
         for _ in 0...5 {
             let bob = Bob(context: managedObjectContext)
             bob.order = PersistenceController.nextBobID
-            PersistenceController.nextBobID += 1
             bobs += [bob]
         }
         

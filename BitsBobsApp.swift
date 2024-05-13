@@ -42,25 +42,21 @@ struct BitsBobsApp: App {
         // Get the context
         let context = persistenceController.container.viewContext
         
+        // Get all the bobs
+        let fetchRequest: NSFetchRequest<Bob> = Bob.fetchRequest()
+        let bobs = (try? context.fetch(fetchRequest)) ?? []
+        
         // 1.4.0
         if modelVersion < 1 {
-            
-            // Get all the bobs
-            let fetchRequest: NSFetchRequest<Bob> = Bob.fetchRequest()
-            do {
-                let bobs = try context.fetch(fetchRequest)
-                for bob in bobs {
-                    // Compress all bit images to icons
-                    for bit in bob.bitArray {
-                        if let image = bit.image, bit.icon == nil {
-                            bit.icon = image.compressed()
-                        }
+            for bob in bobs {
+                // Compress all bit images to icons
+                for bit in bob.bitArray {
+                    if let image = bit.image, bit.icon == nil {
+                        bit.icon = image.compressed()
                     }
                 }
-                try context.save()
-            } catch {
-                print(error)
             }
+            try? context.save()
         }
         
         // 1.4.3

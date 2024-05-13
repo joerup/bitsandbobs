@@ -33,7 +33,7 @@ struct BobList: View {
     var body: some View {
 
         GeometryReader { geometry in
-
+            
             NavigationView {
                 
                 VStack(spacing: 0) {
@@ -49,29 +49,26 @@ struct BobList: View {
                                     Text("Create your first collection!")
                                         .padding()
                                 }
-                                .onAppear {
-                                    self.newBob.toggle()
-                                }
                             }
                             
-                            ForEach(self.bobs, id: \.order) { bob in
-
+                            ForEach(self.bobs, id: \.objectID) { bob in
+                                
                                 NavigationLink(destination: BobView(bob: bob)) {
-
+                                    
                                     ZStack {
                                         if bob.image == nil {
                                             Rectangle()
                                                 .fill(Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2))
                                                 .cornerRadius(20)
                                         }
-
+                                        
                                         Image(uiImage: bob.image != nil ? UIImage(data: bob.image!) ?? UIImage(named: "") ?? UIImage() : UIImage(named: "") ?? UIImage())
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
                                             .blur(radius: 1)
                                             .frame(height: UIScreen.main.bounds.height*0.15)
                                             .cornerRadius(20)
-
+                                        
                                         VStack {
                                             Text(bob.name ?? "")
                                                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
@@ -81,7 +78,7 @@ struct BobList: View {
                                                 .minimumScaleFactor(0.2)
                                                 .foregroundColor(bob.image != nil ? Color(UIColor.white) : Color(UIColor.label))
                                                 .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
-
+                                            
                                             if bob.desc != nil && bob.desc != "" {
                                                 Text(bob.desc ?? "")
                                                     .font(.system(.headline, design: .rounded).weight(.heavy))
@@ -149,7 +146,8 @@ struct BobList: View {
                     BobEditor()
                 }
                 
-                Text("Select a category.")
+                Text("Select a collection")
+                    .foregroundStyle(.secondary)
                     .padding()
             }
             .accentColor(PersistenceController.themeColor)

@@ -18,7 +18,7 @@ struct BobListEditor: View {
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Bob.order, ascending: true)
         ]
-    ) var bobs: FetchedResults<Bob>
+    ) private var bobs: FetchedResults<Bob>
     
     @State private var deleteBob: Bob? = nil
     
@@ -96,7 +96,6 @@ struct BobListEditor: View {
             revisedItems[index].order = Int16(index)
             index += 1
         }
-        PersistenceController.nextBobID = Int16(revisedItems.count)
         PersistenceController.shared.save()
     }
 }

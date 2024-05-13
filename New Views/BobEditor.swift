@@ -50,7 +50,7 @@ struct BobEditor: View {
                         Spacer()
                         ImageEditor(image: self.$image) {
                             ZStack {
-                                Icon(image: self.image, size: 100, faded: true)
+                                Icon(image: self.image, size: 100, rectangle: true, faded: true)
                                 Image(systemName: "photo")
                                     .foregroundColor(Color(UIColor.systemGray))
                                     .font(.largeTitle)
@@ -275,7 +275,6 @@ struct BobEditor: View {
             let bob = Bob(context: managedObjectContext)
             
             bob.order = PersistenceController.nextBobID
-            PersistenceController.nextBobID += 1
             
             bob.name = self.name
             bob.desc = self.desc
