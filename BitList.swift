@@ -20,7 +20,7 @@ struct BitList: View {
     var size: CGSize
     
     var groups: [String]
-    var bitLists: [String: [Bit]]
+    var bitLists: [String : [Bit]]
     
     var display: ListType
     var group: Int
@@ -37,6 +37,7 @@ struct BitList: View {
     
     @Binding var update: Bool
     
+    @State var groupShowing: [String : Bool] = [:]
     @State private var moveBitWarning = false
     
     private var smallIconSize: CGFloat {
@@ -73,11 +74,25 @@ struct BitList: View {
                         
                         Section(header: name.isEmpty ? nil :
                                     HStack(alignment: .bottom) {
-                            Text(name)
-                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                                .foregroundColor(Color(uiColor: .secondaryLabel))
-                                .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
+                            HStack {
+                                Text(name)
+                                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                Button {
+                                    if self.groupShowing[group] == nil {
+                                        self.groupShowing[group] = false
+                                    } else {
+                                        self.groupShowing[group]?.toggle()
+                                    }
+                                } label: {
+                                    Image(systemName: "chevron.\((groupShowing[group] ?? true) ? "down" : "forward")")
+                                        .font(.system(.caption2, design: .rounded, weight: .semibold))
+                                }
+                            }
+                            .foregroundColor(Color(uiColor: .secondaryLabel))
+                            .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
+                            
                             Spacer()
+                            
                             Text(bitCountText(bits: bits))
                                 .font(.system(.footnote, design: .rounded, weight: .medium))
                                 .foregroundColor(Color(uiColor: .tertiaryLabel))
@@ -88,7 +103,7 @@ struct BitList: View {
                         .padding(.bottom, 7)
                         .padding(.top, 15)
                         ) {
-                            if !bits.isEmpty {
+                            if !bits.isEmpty && (self.groupShowing[group] ?? true) {
                                 switch display {
                                 case .smallList, .largeList:
                                     list(name: name, bits: bits, size: size)
