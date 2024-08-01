@@ -65,6 +65,18 @@ struct PersistenceController {
         }
     }
     
+    func discard() {
+        let context = container.viewContext
+        
+        if context.hasChanges {
+            do {
+                try context.reset()
+            } catch {
+                print("Failed to discard")
+            }
+        }
+    }
+    
     func save() {
         let context = container.viewContext
 
@@ -72,7 +84,6 @@ struct PersistenceController {
             do {
                 try context.save()
             } catch {
-                // Show some error here
                 print("No changes")
             }
         }

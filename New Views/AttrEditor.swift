@@ -28,25 +28,17 @@ struct AttrEditor: View {
     @State var sortable: Bool = true
     @State var groupable: Bool = false
     @State var taggable: Bool = false
-    @State var unassignedGroup: Bool = false
     
     // Text
     @State var presets: [String] = []
-    @State var restrictPresets: Bool = false
-    @State var sortTextType: Int = 0
     
     // Numbers
     @State var decimal: Bool = false
-    @State var maxNum: String = ""
-    @State var minNum: String = ""
-    @State var maxIncluded: Bool = false
-    @State var minIncluded: Bool = true
     @State var prefix: String = ""
     @State var suffix: String = ""
     
     // Booleans
     @State var boolType: Int = 0
-    @State var boolDisplayFalse = false
     
     @State private var editPresets = false
     @State private var createEmptyWarning = false
@@ -150,7 +142,7 @@ struct AttrEditor: View {
                             }
                             .padding(.leading)
                         }
-                    }, footer: Text(restrictPresets ? "Values must be chosen from this list." : "Values may be chosen from this list, or others may be entered.")) {
+                    }) {
                         ForEach(self.presets.indices, id: \.self) { p in
                             TextField("Value", text: Binding(
                                 get: { self.presets[p] },
@@ -176,28 +168,6 @@ struct AttrEditor: View {
                     
                     Section {
                         
-                        if self.sortable || self.groupable {
-                            Picker("Default Preset Order", selection: self.$sortTextType) {
-                                Text("As Listed")
-                                    .tag(0)
-                                Text("ABC Order")
-                                    .tag(1)
-                            }
-                            .pickerStyle(.menu)
-                            .accentColor(PersistenceController.themeColor)
-                            .animation(.default, value: sortable || groupable)
-                        }
-                        
-                        if !presets.isEmpty || restrictPresets {
-                            Toggle(isOn: self.$restrictPresets) {
-                                Text("Restrict Choices to Presets")
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        }
-                    }
-                    
-                    Section {
-                        
                         if !self.allowMultiple {
                             Toggle(isOn: self.$sortable) {
                                 Text("Sortable")
@@ -214,14 +184,6 @@ struct AttrEditor: View {
                             Text("Filterable")
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        
-                        if self.groupable {
-                            Toggle(isOn: self.$unassignedGroup) {
-                                Text("Include Unassigned Group")
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                            .animation(.default, value: groupable)
-                        }
                     }
                 }
                 else if type == 1 {
@@ -232,66 +194,6 @@ struct AttrEditor: View {
                             Text("Allow Decimals")
                         }
                         .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        .onChange(of: self.decimal) { value in
-                            self.maxNum = self.maxNum == "" ? "" : value ? String(Double(self.maxNum)!) : String(Int(Double(self.maxNum)!))
-                            self.minNum = self.minNum == "" ? "" : value ? String(Double(self.minNum)!) : String(Int(Double(self.minNum)!))
-                        }
-                        
-                        AStack {
-                            Text("Minimum")
-                            Spacer()
-                            TextField("No Limit", text: self.$minNum, onCommit: {
-                                // Reject if not a number
-                                if Double(self.minNum) == nil {
-                                    self.minNum = ""
-                                    self.minIncluded = false
-                                    return
-                                }
-                                // Turn to integer if decimals are not allowed
-                                if !self.decimal && Int(self.minNum) == nil {
-                                    self.minNum = String(Int(Double(self.minNum)!))
-                                }
-                            })
-                            .keyboardType(.numbersAndPunctuation)
-                            .multilineTextAlignment(.trailing)
-                            if self.minNum != "" {
-                                Text(self.minIncluded ? "Inclusive" : "Not inclusive")
-                                    .font(.caption)
-                                    .foregroundColor(Color(UIColor.systemGray3))
-                                    .onTapGesture {
-                                        self.minIncluded.toggle()
-                                    }
-                            }
-                        }
-
-                        AStack {
-                            Text("Maximum")
-                            Spacer()
-                            TextField("No Limit", text: self.$maxNum, onCommit: {
-                                // Reject if not a number
-                                if Double(self.maxNum) == nil {
-                                    self.maxNum = ""
-                                    self.maxIncluded = false
-                                    return
-                                }
-                                // Turn to integer if decimals are not allowed
-                                if !self.decimal && Int(self.maxNum) == nil {
-                                    self.maxNum = String(Int(Double(self.maxNum)!))
-                                }
-                            })
-                            .keyboardType(.numbersAndPunctuation)
-                            .multilineTextAlignment(.trailing)
-                            if self.maxNum != "" {
-                                Text(self.maxIncluded ? "Inclusive" : "Not inclusive")
-                                    .font(.caption)
-                                    .foregroundColor(Color(UIColor.systemGray3))
-                                    .onTapGesture {
-                                        self.maxIncluded.toggle()
-                                    }
-                            }
-                        }
-                    } footer: {
-                        Text("Values \(maxNum == "" && minNum == "" ? (decimal ? "can be any number" : "can be any integer") : "must be \(decimal ? "" : "integers ")")\(maxNum != "" && minNum != "" ? "between \(minNum) and \(maxNum)" : "")\(maxNum != "" && minNum == "" ? "less than\(maxIncluded ? " or equal to" : "") \(maxNum)" : "")\(minNum != "" && maxNum == "" ? "greater than\(minIncluded ? " or equal to" : "") \(minNum)" : "").")
                     }
                     
                     Section {
@@ -329,12 +231,6 @@ struct AttrEditor: View {
                             }
                             .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             
-                            if self.groupable {
-                                Toggle(isOn: self.$unassignedGroup) {
-                                    Text("Include Unassigned Group")
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                            }
                         }
                     }
                 }
@@ -350,11 +246,6 @@ struct AttrEditor: View {
                         }
                         .pickerStyle(.menu)
                         .accentColor(PersistenceController.themeColor)
-                    
-                        Toggle(isOn: self.$boolDisplayFalse) {
-                            Text("Hide if False")
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                     
                     Section {
@@ -419,7 +310,6 @@ struct AttrEditor: View {
                 self.sortable = attribute!.sortable
                 self.groupable = attribute!.groupable
                 self.taggable = attribute!.taggable
-                self.unassignedGroup = attribute!.unassignedGroup
                 
                 // Text
                 self.presets = attribute!.presets ?? []
@@ -433,21 +323,14 @@ struct AttrEditor: View {
                     }
                 }
                 self.presets.removeAll(where: { $0 == "" })
-                self.restrictPresets = attribute!.restrictPresets
-                self.sortTextType = Int(attribute!.sortTextType)
                 
                 // Numbers
                 self.decimal = attribute!.decimal
-                self.maxNum = attribute!.maxNum == Double.infinity ? "" : self.decimal ? String(attribute!.maxNum) : String(Int(attribute!.maxNum))
-                self.minNum = attribute!.minNum == -Double.infinity ? "" : self.decimal ? String(attribute!.minNum) : String(Int(attribute!.minNum))
-                self.maxIncluded = attribute!.maxNum == Double.infinity ? false : attribute!.maxIncluded
-                self.minIncluded = attribute!.minNum == -Double.infinity ? false : attribute!.minIncluded
                 self.prefix = attribute!.prefix ?? ""
                 self.suffix = attribute!.suffix ?? ""
                 
                 // Booleans
                 self.boolType = Int(attribute!.boolType)
-                self.boolDisplayFalse = attribute!.boolDisplayFalse
             }
         }
     }
@@ -472,8 +355,6 @@ struct AttrEditor: View {
         }
         
         if !(self.maxCount == "" || Double(self.maxCount) != nil) { self.maxCount = "" }
-        if !(self.minNum == "" || Double(self.minNum) != nil) { self.minNum = "" }
-        if !(self.maxNum == "" || Double(self.maxNum) != nil) { self.maxNum = "" }
         
         if create {
             
@@ -492,25 +373,17 @@ struct AttrEditor: View {
             attribute.sortable = self.sortable
             attribute.taggable = self.taggable
             attribute.groupable = self.groupable
-            attribute.unassignedGroup = self.unassignedGroup
             
             // Text
             attribute.presets = self.presets
-            attribute.restrictPresets = self.restrictPresets
-            attribute.sortTextType = Int16(self.sortTextType)
             
             // Numbers
             attribute.decimal = self.decimal
-            attribute.maxNum = self.maxNum == "" ? Double.infinity : self.decimal ? Double(self.maxNum)! : Double(Int(Double(self.maxNum)!))
-            attribute.minNum = self.minNum == "" ? -Double.infinity : self.decimal ? Double(self.minNum)! : Double(Int(Double(self.minNum)!))
-            attribute.maxIncluded = self.maxNum == "" ? false : self.maxIncluded
-            attribute.minIncluded = self.minNum == "" ? false : self.minIncluded
             attribute.prefix = self.prefix
             attribute.suffix = self.suffix
             
             // Booleans
             attribute.boolType = Int16(self.boolType)
-            attribute.boolDisplayFalse = self.boolDisplayFalse
             
             self.attributes += [attribute]
         }
@@ -527,25 +400,17 @@ struct AttrEditor: View {
                 attribute!.sortable = self.sortable
                 attribute!.groupable = self.groupable
                 attribute!.taggable = self.taggable
-                attribute!.unassignedGroup = self.unassignedGroup
                 
                 // Text
                 attribute!.presets = self.presets
-                attribute!.restrictPresets = self.restrictPresets
-                attribute!.sortTextType = Int16(self.sortTextType)
                 
                 // Numbers
                 attribute!.decimal = self.decimal
-                attribute!.maxNum = self.maxNum == "" ? Double.infinity : self.decimal ? Double(self.maxNum)! : Double(Int(Double(self.maxNum)!))
-                attribute!.minNum = self.minNum == "" ? -Double.infinity : self.decimal ? Double(self.minNum)! : Double(Int(Double(self.minNum)!))
-                attribute!.maxIncluded = self.maxNum == "" ? false : self.maxIncluded
-                attribute!.minIncluded = self.minNum == "" ? false : self.minIncluded
                 attribute!.prefix = self.prefix
                 attribute!.suffix = self.suffix
                 
                 // Booleans
                 attribute!.boolType = Int16(self.boolType)
-                attribute!.boolDisplayFalse = self.boolDisplayFalse
             }
             
             self.attributes[Int(attribute!.order)] = attribute!

@@ -225,9 +225,6 @@ struct BobEditor: View {
     func getAttributeDescription(_ attribute: Attribute) -> String {
         var string = ""
         if attribute.type == 0 {
-            if attribute.restrictPresets {
-                string += "Preset "
-            }
             string += "Text"
         }
         else if attribute.type == 1 {

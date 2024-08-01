@@ -28,19 +28,12 @@ extension Attribute {
     @NSManaged public var sortable: Bool
     @NSManaged public var groupable: Bool
     @NSManaged public var taggable: Bool
-    @NSManaged public var unassignedGroup: Bool
     
     // Text
     @NSManaged public var presets: [String]?
-    @NSManaged public var restrictPresets: Bool
-    @NSManaged public var sortTextType: Int16
     
     // Numbers
     @NSManaged public var decimal: Bool
-    @NSManaged public var maxNum: Double
-    @NSManaged public var minNum: Double
-    @NSManaged public var maxIncluded: Bool
-    @NSManaged public var minIncluded: Bool
     @NSManaged public var prefix: String?
     @NSManaged public var suffix: String?
     

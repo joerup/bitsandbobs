@@ -24,7 +24,6 @@ extension Bob {
     
     @NSManaged public var listType: Int16
     @NSManaged public var displayType: Int16
-    @NSManaged public var displayBitIcon: Bool
     
     @NSManaged public var nextBitID: Int16
     @NSManaged public var nextAttrID: Int16

@@ -319,8 +319,6 @@ struct AttrValueSetter: View {
     
     @State private var newValue = ""
     
-    @State private var displayOutOfRangeWarning = false
-    
     var body: some View {
         
         Group {
@@ -338,25 +336,22 @@ struct AttrValueSetter: View {
                             Text(self.newValue != "" ? self.newValue : self.bob.attributeList[a].displayName ?? "")
                                 .foregroundColor(self.newValue == "" ? Color(UIColor.tertiaryLabel) : nil)
                                 .lineLimit(0)
-                                .opacity(self.bob.attributeList[a].restrictPresets ? 1 : 0)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 15)
-                                        .stroke(Color(UIColor.systemGray3), lineWidth: self.bob.attributeList[a].restrictPresets ? 0 : 1)
+                                        .stroke(Color(UIColor.systemGray3), lineWidth: 1)
                                 )
                         }
                         
                         // Text Editor
-                        if !self.bob.attributeList[a].restrictPresets {
-                            TextField(self.bob.attributeList[a].displayName ?? "", text: self.$newValue)
-                                .multilineTextAlignment(.trailing)
-                                .onChange(of: self.newValue, perform: { value in
-                                    setValue(value)
-                                })
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                        }
+                        TextField(self.bob.attributeList[a].displayName ?? "", text: self.$newValue)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: self.newValue, perform: { value in
+                                setValue(value)
+                            })
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
                     }
                     
                     Menu {
@@ -366,10 +361,6 @@ struct AttrValueSetter: View {
                                 Text(value)
                                     .tag(value)
                             }
-                        }
-                        if getPresets(a).isEmpty {
-                            Text("No presets. \(self.bob.attributeList[a].restrictPresets ? "Create some in the attribute menu!" : "Create a new value in the text box!")")
-                                .multilineTextAlignment(.center)
                         }
                         Picker("", selection: self.$newValue) {
                             Text("None")
@@ -435,33 +426,12 @@ struct AttrValueSetter: View {
                                 // Reject if not a number
                                 if Double(self.newValue) == nil {
                                     self.newValue = ""
-                                    self.displayOutOfRangeWarning.toggle()
                                     setValue("")
                                     return
                                 }
                                 // Turn to integer if decimals are not allowed
                                 if !self.bob.attributeList[a].decimal && Int(self.newValue) == nil {
                                     self.newValue = String(Int(Double(self.newValue)!))
-                                }
-                                // Reject if too low out of range, included
-                                if (Double(self.newValue)! < self.bob.attributeList[a].minNum) && self.bob.attributeList[a].minIncluded {
-                                    self.newValue = ""
-                                    self.displayOutOfRangeWarning.toggle()
-                                }
-                                // Reject if too low out of range, not included
-                                else if (Double(self.newValue)! <= self.bob.attributeList[a].minNum) && !self.bob.attributeList[a].minIncluded {
-                                    self.newValue = ""
-                                    self.displayOutOfRangeWarning.toggle()
-                                }
-                                // Reject if too high out of range, included
-                                else if (Double(self.newValue)! > self.bob.attributeList[a].maxNum) && self.bob.attributeList[a].maxIncluded {
-                                    self.newValue = ""
-                                    self.displayOutOfRangeWarning.toggle()
-                                }
-                                // Reject if too high out of range, not included
-                                else if (Double(self.newValue)! >= self.bob.attributeList[a].maxNum) && !self.bob.attributeList[a].maxIncluded {
-                                    self.newValue = ""
-                                    self.displayOutOfRangeWarning.toggle()
                                 }
                                 setValue(self.newValue)
                             })
@@ -472,22 +442,6 @@ struct AttrValueSetter: View {
                                 }
                                 // Turn to integer if decimals are not allowed
                                 if !self.bob.attributeList[a].decimal && Int(value) == nil {
-                                    return
-                                }
-                                // Reject if too low out of range, included
-                                if (Double(value)! < self.bob.attributeList[a].minNum) && self.bob.attributeList[a].minIncluded {
-                                    return
-                                }
-                                // Reject if too low out of range, not included
-                                else if (Double(value)! <= self.bob.attributeList[a].minNum) && !self.bob.attributeList[a].minIncluded {
-                                    return
-                                }
-                                // Reject if too high out of range, included
-                                else if (Double(value)! > self.bob.attributeList[a].maxNum) && self.bob.attributeList[a].maxIncluded {
-                                    return
-                                }
-                                // Reject if too high out of range, not included
-                                else if (Double(value)! >= self.bob.attributeList[a].maxNum) && !self.bob.attributeList[a].maxIncluded {
                                     return
                                 }
                                 setValue(value)
@@ -506,9 +460,6 @@ struct AttrValueSetter: View {
                             .foregroundColor(Color(UIColor.systemGray))
                             .multilineTextAlignment(.trailing)
                     }
-                }
-                .alert(isPresented: self.$displayOutOfRangeWarning) {
-                    Alert(title: Text("Out of Range"), message: Text(getRangeText()))
                 }
             }
             
@@ -623,15 +574,6 @@ struct AttrValueSetter: View {
             }
         }
         return presets
-    }
-    
-    func getRangeText() -> String {
-        let a = self.bob.attributeList[a]
-        if a.decimal {
-            return (a.minNum == -.infinity ? "-∞" : String(a.minNum)) + " " + (a.minIncluded ? "≤" : "<") + " x " + (a.maxIncluded ? "≤" : "<") + " " + (a.maxNum == .infinity ? "∞" : String(a.maxNum))
-        } else {
-            return (a.minNum == -.infinity ? "-∞" : String(Int(a.minNum))) + " " + (a.minIncluded ? "≤" : "<") + " x " + (a.maxIncluded ? "≤" : "<") + " " + (a.maxNum == .infinity ? "∞" : String(Int(a.maxNum)))
-        }
     }
 }
 

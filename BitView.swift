@@ -33,18 +33,7 @@ struct BitView: View {
                         
                         Group {
                             if let imageData = bit.image, let image = UIImage(data: imageData) {
-                                if !bob.displayBitIcon {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                        .cornerRadius(20)
-                                        .padding(10)
-                                        .onTapGesture {
-                                            toggleImageDisplay()
-                                        }
-                                }
-                                else if let imageData = bob.image, let image = UIImage(data: imageData) {
+                                if let imageData = bob.image, let image = UIImage(data: imageData) {
                                     Image(uiImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
@@ -81,15 +70,12 @@ struct BitView: View {
                         
                         VStack {
                             
-                            if bob.displayBitIcon && bit.image != nil {
+                            if let image = bit.image, let uiImage = UIImage(data: image) {
                                 
                                 Spacer()
                                 
-                                Icon(image: UIImage(data: bit.image!)!, size: UIScreen.main.bounds.height*0.35)
+                                Icon(image: uiImage, size: UIScreen.main.bounds.height*0.35)
                                     .shadow(color: .black.opacity(0.5), radius: 20)
-                                    .onTapGesture {
-                                        toggleImageDisplay()
-                                    }
                             }
                             
                             Spacer()
@@ -100,8 +86,7 @@ struct BitView: View {
                                     Text(String(bit.order+1))
                                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                         .tracking(-0.5)
-                                        .foregroundColor(Color((bit.image != nil && !bob.displayBitIcon) ? UIColor.white : UIColor.label))
-                                        .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
+                                        .foregroundColor(Color(UIColor.label))
                                         .frame(width: 48, height: 48)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.5)
@@ -122,8 +107,7 @@ struct BitView: View {
                                         .tracking(-0.5)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
-                                        .foregroundColor((bit.image != nil && !bob.displayBitIcon) ? Color(UIColor.white) : Color(UIColor.label))
-                                        .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
+                                        .foregroundColor(Color(UIColor.label))
 
                                     if let desc = bit.desc, !desc.isEmpty {
                                         Text(desc)
@@ -131,8 +115,7 @@ struct BitView: View {
                                             .tracking(-0.25)
                                             .lineLimit(0)
                                             .minimumScaleFactor(0.2)
-                                            .foregroundColor(Color((bit.image != nil && !bob.displayBitIcon) ? UIColor.white : UIColor.systemGray))
-                                            .shadow(color: .black, radius: (bit.image != nil && !bob.displayBitIcon) ? 20 : 0)
+                                            .foregroundColor(Color(UIColor.systemGray))
                                     }
                                 }
                                 .padding(.horizontal)
@@ -228,14 +211,6 @@ struct BitView: View {
                 self.bit = bit
                 update.toggle()
             }
-        }
-    }
-    
-    private func toggleImageDisplay() {
-        bob.displayBitIcon.toggle()
-        PersistenceController.shared.save()
-        withAnimation {
-            update.toggle()
         }
     }
     

@@ -551,23 +551,12 @@ struct BobView: View {
                     }
                 }
                 // Sort by preset order
-                if attribute!.sortTextType == 0 {
-                    var sortedArray: [Bit] = []
-                    for preset in presets {
-                        sortedArray += bitArray.filter { $0.attributes![attribute!.name ?? ""] == preset }
-                    }
-                    let sorted = sortedArray + bitArray.filter { $0.attributes![attribute!.name ?? ""] == nil || $0.attributes![attribute!.name ?? ""] == "" }
-                    return self.sortReversed ? sorted.reversed() : sorted
+                var sortedArray: [Bit] = []
+                for preset in presets {
+                    sortedArray += bitArray.filter { $0.attributes![attribute!.name ?? ""] == preset }
                 }
-                // Sort by name
-                else if attribute!.sortTextType == 1 {
-                    if self.sortReversed {
-                        return bitArray.sorted { $0.attributes![attribute!.name ?? ""] ?? " " > $1.attributes![attribute!.name ?? ""] ?? " " }
-                    }
-                    else {
-                        return bitArray.sorted { $0.attributes![attribute!.name ?? ""] ?? "ü" < $1.attributes![attribute!.name ?? ""] ?? "ü" }
-                    }
-                }
+                let sorted = sortedArray + bitArray.filter { $0.attributes![attribute!.name ?? ""] == nil || $0.attributes![attribute!.name ?? ""] == "" }
+                return self.sortReversed ? sorted.reversed() : sorted
             }
             // Sort by number
             else if attribute!.type == 1 {
@@ -608,20 +597,10 @@ struct BobView: View {
             // Remove empty presets
             presets = presets.filter { !$0.isEmpty }
             // Group by preset order
-            if attribute.sortTextType == 0 {
-                if attribute.unassignedGroup && unassigned {
-                    presets += ["Unassigned"]
-                }
-                return presets
+            if unassigned {
+                presets += ["Unassigned"]
             }
-            // Group by name
-            else if attribute.sortTextType == 1 {
-                presets = presets.sorted(by: { $0 < $1 })
-                if attribute.unassignedGroup && unassigned {
-                    presets += ["Unassigned"]
-                }
-                return presets
-            }
+            return presets
         }
         // Group by number
         else if attribute.type == 1 {

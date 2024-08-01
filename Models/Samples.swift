@@ -46,7 +46,6 @@ class Samples {
         bobs[0].image = UIImage(imageLiteralResourceName: "coins").pngData()
         bobs[0].listType = 1
         bobs[0].displayType = 4
-        bobs[0].displayBitIcon = true
 
         var attrs0 = [Attribute]()
         for i in 0...2 {
@@ -100,7 +99,6 @@ class Samples {
         bobs[1].image = UIImage(imageLiteralResourceName: "vinyls").pngData()
         bobs[1].listType = 0
         bobs[1].displayType = 1
-        bobs[1].displayBitIcon = false
         
         var attrs1 = [Attribute]()
         for i in 0...2 {
