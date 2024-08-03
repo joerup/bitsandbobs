@@ -107,9 +107,7 @@ struct BobView: View {
                                 .aspectRatio(1.0, contentMode: .fill)
                             TextField("Search", text: self.$search, onCommit: {
                                 if search == "" {
-                                    withAnimation {
-                                        self.showSearch = false
-                                    }
+                                    self.showSearch = false
                                 }
                             })
                             .disableAutocorrection(true)
@@ -124,14 +122,11 @@ struct BobView: View {
                             }
                             Spacer()
                             Button {
-                                withAnimation {
-                                    self.search = ""
-                                    self.showSearch = false
-                                    setGroupAndSort()
-                                }
+                                self.search = ""
+                                self.showSearch = false
+                                setGroupAndSort()
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .imageScale(.small)
                                     .foregroundColor(Color(UIColor.systemGray))
                                     .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                     .padding(.horizontal, 5)
@@ -141,6 +136,7 @@ struct BobView: View {
                         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                         .frame(height: 32)
                         .padding(.horizontal, 5)
+                        .padding(.vertical, 3)
                         .background(Color(UIColor.systemGray6).cornerRadius(10))
                         .padding(.vertical, 2)
                         .padding(.bottom, 8)
@@ -293,19 +289,15 @@ struct BobView: View {
                         Spacer()
                         
                         Button {
-                            withAnimation {
-                                self.showTags.toggle()
-                                setGroupAndSort()
-                            }
+                            self.showTags.toggle()
+                            setGroupAndSort()
                         } label: {
                             circle(icon: "line.3.horizontal.decrease", active: showTags)
                         }
                         
                         Button {
-                            withAnimation {
-                                self.showSearch.toggle()
-                                setGroupAndSort()
-                            }
+                            self.showSearch.toggle()
+                            setGroupAndSort()
                         } label: {
                             circle(icon: "magnifyingglass", active: showSearch)
                         }
@@ -475,7 +467,7 @@ struct BobView: View {
             let attribute = getGroupAttribute(group)
             guard let attribute else { return [""] }
             // Get all the attribute values
-            return getAllAttributeValues(for: attribute, among: filteredBits, includeAll: true)
+            return getAllAttributeValues(for: attribute, among: filteredBits)
         }
     }
     
@@ -576,7 +568,7 @@ struct BobView: View {
         return self.sortReversed ? bitArray.reversed() : bitArray
     }
     
-    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit], includeAll: Bool = false) -> [String] {
+    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit]) -> [String] {
         // Group by text
         if attribute.type == 0 {
             var presets = attribute.presets ?? []
@@ -625,7 +617,7 @@ struct BobView: View {
         }
         // Group by boolean
         else if attribute.type == 2 {
-            return includeAll || !attribute.boolDisplayFalse ? ["True","False"] : ["True"]
+            return ["True","False"]
         }
         return [""]
     }
@@ -650,11 +642,7 @@ struct BobView: View {
     }
     
     private func attributeValueText(attribute: Attribute, value: String) -> String {
-        let value = BitList.editValueName(value, attribute: attribute)
-        switch attribute.type {
-        case 2: return attribute.boolDisplayFalse ? "\(attribute.name ?? "")" : value
-        default: return value
-        }
+        return BitList.editValueName(value, attribute: attribute)
     }
     
     // MARK: Save

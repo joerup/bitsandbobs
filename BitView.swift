@@ -32,37 +32,19 @@ struct BitView: View {
                     ZStack {
                         
                         Group {
-                            if let imageData = bit.image, let image = UIImage(data: imageData) {
-                                if let imageData = bob.image, let image = UIImage(data: imageData) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .blur(radius: 7)
-                                        .opacity(0.2)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                        .cornerRadius(20)
-                                        .padding(10)
-                                }
-                                else {
-                                    Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                        .cornerRadius(20)
-                                        .padding(10)
-                                }
-                            }
-                            else if let imageData = bob.image, let image = UIImage(data: imageData) {
+                            if let imageData = bob.image, let image = UIImage(data: imageData) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .blur(radius: 7)
+                                    .blur(radius: 6)
                                     .opacity(0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
                             else {
                                 Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
@@ -157,8 +139,7 @@ struct BitView: View {
                         if bit.attributes != nil {
                                 ForEach(0..<bob.attributeList.count, id: \.self) { a in
                                     if bit.attributes![bob.attributeList[a].name ?? ""] != nil &&
-                                        bit.attributes![bob.attributeList[a].name ?? ""] != "" &&
-                                        !(bob.attributeList[a].type == 2 && bob.attributeList[a].boolDisplayFalse && bit.attributes![bob.attributeList[a].name ?? ""] == "False") {
+                                        bit.attributes![bob.attributeList[a].name ?? ""] != "" {
                                         AStack {
                                             Text(bob.attributeList[a].displayName ?? "")
                                                 .font(.system(.headline, design: .rounded).weight(.semibold))

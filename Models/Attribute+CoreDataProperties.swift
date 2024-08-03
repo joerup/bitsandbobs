@@ -39,7 +39,6 @@ extension Attribute {
     
     // Booleans
     @NSManaged public var boolType: Int16
-    @NSManaged public var boolDisplayFalse: Bool
 
 }
 

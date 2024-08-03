@@ -126,6 +126,25 @@ struct AttrEditor: View {
                 }
                 
                 if self.type == 0 {
+                    Section {
+                        
+                        if !self.allowMultiple {
+                            Toggle(isOn: self.$sortable) {
+                                Text("Sortable")
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        }
+                        
+                        Toggle(isOn: self.$groupable) {
+                            Text("Groupable")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                        
+                        Toggle(isOn: self.$taggable) {
+                            Text("Filterable")
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
+                    }
                     
                     Section(header: HStack {
                         Text("Presets")
@@ -164,26 +183,6 @@ struct AttrEditor: View {
                         while self.presets.count >= 2 && self.presets[self.presets.count-2].isEmpty && self.presets[self.presets.count-1].isEmpty {
                             self.presets.removeLast()
                         }
-                    }
-                    
-                    Section {
-                        
-                        if !self.allowMultiple {
-                            Toggle(isOn: self.$sortable) {
-                                Text("Sortable")
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        }
-                        
-                        Toggle(isOn: self.$groupable) {
-                            Text("Groupable")
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
-                        
-                        Toggle(isOn: self.$taggable) {
-                            Text("Filterable")
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                 }
                 else if type == 1 {

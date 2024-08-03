@@ -13,40 +13,40 @@ import PhotosUI
 struct ImageEditor<Content: View>: View {
     
     @Binding var image: UIImage
+    
     @State private var photoItem: PhotosPickerItem?
+    
+    @State private var displayMenu = false
+    
     @State private var displayCamera = false
     @State private var displayLibrary = false
     
     var content: () -> Content
     
     var body: some View {
-        Menu {
+        Button {
+            displayMenu.toggle()
+        } label: {
+            content()
+        }
+        .confirmationDialog("Choose a new photo", isPresented: $displayMenu) {
             Button {
                 self.displayCamera = true
             } label: {
-                HStack {
-                    Image(systemName: "camera")
-                    Text("Camera").textCase(nil)
-                }
+                Text("Camera").textCase(nil)
             }
             Button {
                 self.displayLibrary = true
             } label: {
-                HStack {
-                    Image(systemName: "photo")
-                    Text("Photo Library").textCase(nil)
-                }
+                Text("Photo Library").textCase(nil)
             }
             Button {
                 self.image = UIImage()
             } label: {
-                HStack {
-                    Image(systemName: "trash")
-                    Text("Remove Image").textCase(nil)
-                }
+                Text("Remove Image").textCase(nil)
             }
-        } label: {
-            content()
+        } message: {
+            Text("Choose a new photo").textCase(nil)
         }
         .sheet(isPresented: $displayCamera) {
             ImagePicker(sourceType: .camera, selectedImage: self.$image)

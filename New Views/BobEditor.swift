@@ -243,12 +243,6 @@ struct BobEditor: View {
             }
         }
         else if attribute.type == 2 {
-            if attribute.boolType == 0 {
-                string += "T/F "
-            }
-            else if attribute.boolType == 1 {
-                string += "Y/N "
-            }
             string += "Boolean"
         }
         else if attribute.type == 3 {
