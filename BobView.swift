@@ -141,7 +141,6 @@ struct BobView: View {
                         .padding(.vertical, 2)
                         .padding(.bottom, 8)
                         .padding(.horizontal, 10)
-                        .transition(.opacity)
                     }
                     
                     if showTags {
@@ -210,7 +209,8 @@ struct BobView: View {
                                 }
                                 ForEach(filterableAttributes, id: \.name) { attribute in
                                     HStack(spacing: 5) {
-                                        ForEach(getAllAttributeValues(for: attribute, among: bob.bitArray), id: \.self) { value in
+                                        let values = getAllAttributeValues(for: attribute, among: bob.bitArray, forFilter: true)
+                                        ForEach(values, id: \.self) { value in
                                             let filter = (attribute: attribute.name ?? "", value: value)
                                             Button {
                                                 if let index = attributeFilters.firstIndex(where: { $0.attribute == filter.attribute && $0.value == filter.value }) {
@@ -237,7 +237,6 @@ struct BobView: View {
                         .scrollIndicators(.hidden)
                         .padding(.vertical, 2)
                         .padding(.bottom, 8)
-                        .transition(.opacity)
                     }
                     
                     HStack {
@@ -289,15 +288,19 @@ struct BobView: View {
                         Spacer()
                         
                         Button {
-                            self.showTags.toggle()
-                            setGroupAndSort()
+                            withAnimation {
+                                self.showTags.toggle()
+                                setGroupAndSort()
+                            }
                         } label: {
                             circle(icon: "line.3.horizontal.decrease", active: showTags)
                         }
                         
                         Button {
-                            self.showSearch.toggle()
-                            setGroupAndSort()
+                            withAnimation {
+                                self.showSearch.toggle()
+                                setGroupAndSort()
+                            }
                         } label: {
                             circle(icon: "magnifyingglass", active: showSearch)
                         }
@@ -568,7 +571,7 @@ struct BobView: View {
         return self.sortReversed ? bitArray.reversed() : bitArray
     }
     
-    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit]) -> [String] {
+    private func getAllAttributeValues(for attribute: Attribute, among bits: [Bit], forFilter: Bool = false) -> [String] {
         // Group by text
         if attribute.type == 0 {
             var presets = attribute.presets ?? []
@@ -617,7 +620,7 @@ struct BobView: View {
         }
         // Group by boolean
         else if attribute.type == 2 {
-            return ["True","False"]
+            return forFilter ? ["True"] : ["True","False"]
         }
         return [""]
     }
@@ -642,7 +645,11 @@ struct BobView: View {
     }
     
     private func attributeValueText(attribute: Attribute, value: String) -> String {
-        return BitList.editValueName(value, attribute: attribute)
+        let value = BitList.editValueName(value, attribute: attribute)
+        switch attribute.type {
+        case 2: return "\(attribute.name ?? "")"
+        default: return value
+        }
     }
     
     // MARK: Save

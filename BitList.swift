@@ -72,11 +72,8 @@ struct BitList: View {
                         let name = BitList.editValueName(group, attribute: groupAttribute)
                         let bits = self.bitLists[group] ?? []
                         
-                        Section(header: name.isEmpty ? nil :
-                                    HStack(alignment: .bottom) {
-                            HStack {
-                                Text(name)
-                                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        Section(header: name.isEmpty ? nil : 
+                            HStack(alignment: .bottom) {
                                 Button {
                                     if self.groupShowing[group] == nil {
                                         self.groupShowing[group] = false
@@ -84,24 +81,26 @@ struct BitList: View {
                                         self.groupShowing[group]?.toggle()
                                     }
                                 } label: {
-                                    Image(systemName: "chevron.\((groupShowing[group] ?? true) ? "down" : "forward")")
-                                        .font(.system(.caption2, design: .rounded, weight: .semibold))
+                                    HStack {
+                                        Text(name)
+                                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                        Image(systemName: "chevron.\((groupShowing[group] ?? true) ? "down" : "forward")")
+                                            .font(.system(.caption2, design: .rounded, weight: .semibold))
+                                    }
                                 }
+                                .foregroundColor(Color(uiColor: .secondaryLabel))
+                                .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
+                                
+                                Spacer()
+                                
+                                Text(bitCountText(bits: bits))
+                                    .font(.system(.footnote, design: .rounded, weight: .medium))
+                                    .foregroundColor(Color(uiColor: .tertiaryLabel))
+                                    .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                             }
-                            .foregroundColor(Color(uiColor: .secondaryLabel))
-                            .dynamicTypeSize(..<DynamicTypeSize.accessibility1)
-                            
-                            Spacer()
-                            
-                            Text(bitCountText(bits: bits))
-                                .font(.system(.footnote, design: .rounded, weight: .medium))
-                                .foregroundColor(Color(uiColor: .tertiaryLabel))
-                                .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
-                        }
-                        .transition(.opacity)
-                        .padding(.horizontal, 15)
-                        .padding(.bottom, 7)
-                        .padding(.top, 15)
+                            .padding(.horizontal, 15)
+                            .padding(.bottom, 7)
+                            .padding(.top, 15)
                         ) {
                             if !bits.isEmpty && (self.groupShowing[group] ?? true) {
                                 switch display {

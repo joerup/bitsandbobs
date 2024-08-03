@@ -32,19 +32,37 @@ struct BitView: View {
                     ZStack {
                         
                         Group {
-                            if let imageData = bob.image, let image = UIImage(data: imageData) {
+                            if let imageData = bit.image, let _ = UIImage(data: imageData) {
+                                if let imageData = bob.image, let image = UIImage(data: imageData) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .blur(radius: 7)
+                                        .opacity(0.2)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                        .cornerRadius(20)
+                                        .padding(10)
+                                }
+                                else {
+                                    Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
+                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                        .cornerRadius(20)
+                                        .padding(10)
+                                }
+                            }
+                            else if let imageData = bob.image, let image = UIImage(data: imageData) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .blur(radius: 6)
+                                    .blur(radius: 7)
                                     .opacity(0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
                             else {
                                 Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
