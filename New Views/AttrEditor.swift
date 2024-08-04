@@ -46,6 +46,8 @@ struct AttrEditor: View {
     
     @State private var deleteAttribute = false
     
+    @State private var hasChanges = false
+
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
@@ -55,6 +57,52 @@ struct AttrEditor: View {
         formatter.numberStyle = .decimal
         formatter.locale = Locale.current
         return formatter
+    }
+    
+    init(attribute: Attribute? = nil, attributes: Binding<[Attribute]>, nextAttrID: Binding<Int16>, bob: Bob? = nil) {
+        self.attribute = attribute
+        self._attributes = attributes
+        self._nextAttrID = nextAttrID
+        self.bob = bob
+        
+        if let attribute {
+            self.create = false
+            
+            self._name = State(initialValue: attribute.name ?? "")
+            self._displayName = State(initialValue: attribute.displayName ?? attribute.name ?? "")
+            self._type = State(initialValue: Int(attribute.type))
+            self._allowMultiple = State(initialValue: attribute.allowMultiple)
+            self._maxCount = State(initialValue: attribute.maxCount == 0 ? "" : String(attribute.maxCount))
+            
+            // Organization
+            self._sortable = State(initialValue: attribute.sortable)
+            self._groupable = State(initialValue: attribute.groupable)
+            self._taggable = State(initialValue: attribute.taggable)
+            
+            // Text
+            self._presets = State(initialValue: attribute.presets ?? [])
+            
+            // Numbers
+            self._decimal = State(initialValue: attribute.decimal)
+            self._prefix = State(initialValue: attribute.prefix ?? "")
+            self._suffix = State(initialValue: attribute.suffix ?? "")
+            
+            // Booleans
+            self._boolType = State(initialValue: Int(attribute.boolType))
+            
+            if bob != nil {
+                for bit in bob!.bitArray {
+                    for value in bit.allAttributeValues(attribute.name) {
+                        if !self.presets.contains(value) && value != "" {
+                            self.presets += [value]
+                        }
+                    }
+                }
+            }
+            self.presets.removeAll(where: { $0 == "" })
+        }
+        
+        self.hasChanges = false
     }
     
     var body: some View {
@@ -70,10 +118,16 @@ struct AttrEditor: View {
                         if create {
                             TextField("Name", text: self.$name)
                                 .multilineTextAlignment(.trailing)
+                                .onChange(of: name) { _ in
+                                    hasChanges = true
+                                }
                         }
                         else {
                             TextField("Name", text: self.$displayName)
                                 .multilineTextAlignment(.trailing)
+                                .onChange(of: displayName) { _ in
+                                    hasChanges = true
+                                }
                         }
                     }
                     
@@ -88,6 +142,9 @@ struct AttrEditor: View {
 //                            .tag(3)
                     }
                     .pickerStyle(.menu)
+                    .onChange(of: type) { _ in
+                        hasChanges = true
+                    }
                 }
                 
                 if self.type != 2 {
@@ -96,6 +153,9 @@ struct AttrEditor: View {
                         
                         Toggle(isOn: self.$allowMultiple) {
                             Text("Multiple Values")
+                        }
+                        .onChange(of: allowMultiple) { _ in
+                            hasChanges = true
                         }
                         
                         if self.allowMultiple {
@@ -117,6 +177,9 @@ struct AttrEditor: View {
                                 .multilineTextAlignment(.trailing)
                             }
                             .animation(.default, value: allowMultiple)
+                            .onChange(of: maxCount) { _ in
+                                hasChanges = true
+                            }
                         }
                     }
                 }
@@ -128,14 +191,23 @@ struct AttrEditor: View {
                             Toggle(isOn: self.$sortable) {
                                 Text("Sortable")
                             }
+                            .onChange(of: sortable) { _ in
+                                hasChanges = true
+                            }
                         }
                         
                         Toggle(isOn: self.$groupable) {
                             Text("Groupable")
                         }
+                        .onChange(of: groupable) { _ in
+                            hasChanges = true
+                        }
                         
                         Toggle(isOn: self.$taggable) {
                             Text("Filterable")
+                        }
+                        .onChange(of: taggable) { _ in
+                            hasChanges = true
                         }
                     }
                     
@@ -169,6 +241,7 @@ struct AttrEditor: View {
                         }
                     }
                     .onChange(of: presets) { presets in
+                        hasChanges = true
                         if presets.last != "" {
                             self.presets += [""]
                         }
@@ -184,6 +257,9 @@ struct AttrEditor: View {
                         Toggle(isOn: self.$decimal) {
                             Text("Allow Decimals")
                         }
+                        .onChange(of: decimal) { _ in
+                            hasChanges = true
+                        }
                     }
                     
                     Section {
@@ -195,6 +271,9 @@ struct AttrEditor: View {
                                 .multilineTextAlignment(.trailing)
                                 .autocapitalization(.none)
                         }
+                        .onChange(of: prefix) { _ in
+                            hasChanges = true
+                        }
 
                         AStack {
                             Text("Suffix")
@@ -202,6 +281,9 @@ struct AttrEditor: View {
                             TextField("Suffix", text: self.$suffix)
                                 .multilineTextAlignment(.trailing)
                                 .autocapitalization(.none)
+                        }
+                        .onChange(of: suffix) { _ in
+                            hasChanges = true
                         }
                     }
                     
@@ -212,9 +294,15 @@ struct AttrEditor: View {
                             Toggle(isOn: self.$groupable) {
                                 Text("Groupable")
                             }
+                            .onChange(of: groupable) { _ in
+                                hasChanges = true
+                            }
                             
                             Toggle(isOn: self.$taggable) {
                                 Text("Filterable")
+                            }
+                            .onChange(of: taggable) { _ in
+                                hasChanges = true
                             }
                             
                         }
@@ -231,12 +319,18 @@ struct AttrEditor: View {
                                 .tag(1)
                         }
                         .pickerStyle(.menu)
+                        .onChange(of: boolType) { _ in
+                            hasChanges = true
+                        }
                     }
                     
                     Section {
                         
                         Toggle(isOn: self.$taggable) {
                             Text("Filterable")
+                        }
+                        .onChange(of: taggable) { _ in
+                            hasChanges = true
                         }
                     }
                 }
@@ -260,7 +354,7 @@ struct AttrEditor: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
-                        if create && name.isEmpty {
+                        if !hasChanges {
                             self.presentationMode.wrappedValue.dismiss()
                         } else {
                             self.cancelAlert.toggle()
@@ -286,7 +380,7 @@ struct AttrEditor: View {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
                     }
-                    .disabled(self.name == "")
+                    .disabled(self.name == "" || (self.displayName == "" && !create))
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the attribute a name."))
                     }
@@ -308,41 +402,6 @@ struct AttrEditor: View {
         }
         .interactiveDismissDisabled()
         .tint(PersistenceController.themeColor)
-        .onAppear {
-            if attribute != nil {
-                self.name = attribute!.name ?? ""
-                self.displayName = attribute!.displayName ?? attribute!.name ?? ""
-                self.type = Int(attribute!.type)
-                self.allowMultiple = attribute!.allowMultiple
-                self.maxCount = attribute!.maxCount == 0 ? "" : String(attribute!.maxCount)
-                
-                // Organization
-                self.sortable = attribute!.sortable
-                self.groupable = attribute!.groupable
-                self.taggable = attribute!.taggable
-                
-                // Text
-                self.presets = attribute!.presets ?? []
-                if bob != nil {
-                    for bit in bob!.bitArray {
-                        for value in bit.allAttributeValues(attribute!.name) {
-                            if !self.presets.contains(value) && value != "" {
-                                self.presets += [value]
-                            }
-                        }
-                    }
-                }
-                self.presets.removeAll(where: { $0 == "" })
-                
-                // Numbers
-                self.decimal = attribute!.decimal
-                self.prefix = attribute!.prefix ?? ""
-                self.suffix = attribute!.suffix ?? ""
-                
-                // Booleans
-                self.boolType = Int(attribute!.boolType)
-            }
-        }
     }
     
     func moveAttributePresets(from source: IndexSet, to destination: Int) {
@@ -376,7 +435,7 @@ struct AttrEditor: View {
             attribute.name = self.name
             attribute.displayName = self.displayName != "" ? self.displayName : self.name
             attribute.type = Int16(self.type)
-            attribute.allowMultiple = self.allowMultiple
+            attribute.allowMultiple = self.type == 2 ? false : self.allowMultiple
             attribute.maxCount = Int16(self.maxCount) ?? 0
             
             // Organization
@@ -403,7 +462,7 @@ struct AttrEditor: View {
                 attribute!.name = self.name
                 attribute!.displayName = self.displayName != "" ? self.displayName : self.name
                 attribute!.type = Int16(self.type)
-                attribute!.allowMultiple = self.allowMultiple
+                attribute!.allowMultiple = self.type == 2 ? false : self.allowMultiple
                 attribute!.maxCount = Int16(self.maxCount) ?? 0
                 
                 // Organization

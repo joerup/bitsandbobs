@@ -18,7 +18,7 @@ struct BobEditor: View {
     @State var attributes: [Attribute] = []
     @State var listType: Int = 0
     
-    @State var create = true
+    private var create = true
     
     @State var nextAttrID: Int16 = 0
     
@@ -31,11 +31,29 @@ struct BobEditor: View {
     @State private var cancelAlert = false
     
     @State private var deleteBob = false
+    
+    @State private var hasChanges = false
 
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
     var dismissNavigation: DismissAction? = nil
+    
+    init(bob: Bob? = nil, bobs: [Bob], dismissNavigation: DismissAction? = nil) {
+        self.bob = bob
+        self.bobs = bobs
+        self.dismissNavigation = dismissNavigation
+        
+        if let bob {
+            self.create = false
+            self._name = State(initialValue: bob.name ?? "")
+            self._desc = State(initialValue: bob.desc ?? "")
+            self._image = State(initialValue: bob.image != nil ? UIImage(data: bob.image!)! : UIImage())
+            self._attributes = State(initialValue: bob.attributeList)
+            self._nextAttrID = State(initialValue: bob.nextAttrID)
+            self._listType = State(initialValue: Int(bob.listType))
+        }
+    }
 
     var body: some View {
         
@@ -55,6 +73,9 @@ struct BobEditor: View {
                             }
                         }
                         .padding(.top, 10)
+                        .onChange(of: image) { _ in
+                            hasChanges = true
+                        }
                         Spacer()
                     }
                 ) { }
@@ -65,12 +86,18 @@ struct BobEditor: View {
                         Spacer()
                         TextField("Name", text: self.$name)
                             .multilineTextAlignment(.trailing)
+                            .onChange(of: name) { _ in
+                                hasChanges = true
+                            }
                     }
                     AStack {
                         Text("Description")
                         Spacer()
                         TextField("Description", text: self.$desc)
                             .multilineTextAlignment(.trailing)
+                            .onChange(of: desc) { _ in
+                                hasChanges = true
+                            }
                     }
                     Picker("Collection Type", selection: self.$listType) {
                         Text("Basic")
@@ -81,6 +108,9 @@ struct BobEditor: View {
                             .tag(2)
                     }
                     .pickerStyle(.menu)
+                    .onChange(of: listType) { _ in
+                        hasChanges = true
+                    }
                 }
                 
                 Section(header: HStack {
@@ -117,6 +147,9 @@ struct BobEditor: View {
                     }
                     .onMove(perform: moveAttributes)
                     .onDelete(perform: removeAttributes)
+                    .onChange(of: attributes) { _ in
+                        hasChanges = true
+                    }
                     
                     Button {
                         self.newAttribute.toggle()
@@ -145,17 +178,17 @@ struct BobEditor: View {
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
             .sheet(isPresented: self.$newAttribute) {
-                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 0)
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob)
             }
             .sheet(item: self.$editAttribute) { attribute in
-                AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, create: false)
+                AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob)
             }
             .navigationBarTitle(create ? "New Collection" : "Edit Collection")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
-                        if create && name.isEmpty {
+                        if !hasChanges {
                             self.presentationMode.wrappedValue.dismiss()
                         } else {
                             self.cancelAlert.toggle()
@@ -204,16 +237,6 @@ struct BobEditor: View {
         }
         .interactiveDismissDisabled()
         .tint(PersistenceController.themeColor)
-        .onAppear {
-            guard let bob else { return }
-            self.create = false
-            self.name = bob.name ?? ""
-            self.desc = bob.desc ?? ""
-            self.image = bob.image != nil ? UIImage(data: bob.image!)! : UIImage()
-            self.attributes = bob.attributeList
-            self.nextAttrID = bob.nextAttrID
-            self.listType = Int(bob.listType)
-        }
     }
     
     func getAttributeDescription(_ attribute: Attribute) -> String {
@@ -222,9 +245,6 @@ struct BobEditor: View {
             string += "Text"
         }
         else if attribute.type == 1 {
-            if attribute.decimal {
-                string += "Decimal "
-            }
             string += "Number"
             if attribute.prefix != nil && attribute.suffix != nil && attribute.prefix != "" && attribute.suffix != "" {
                 string += " (\(attribute.prefix!) x \(attribute.suffix!))"

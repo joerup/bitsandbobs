@@ -22,7 +22,7 @@ struct BitEditor: View {
     @State var attributes: [String:String] = [:]
     @State var checked = false
     
-    @State private var create = true
+    private var create = true
 
     @State private var deleteBit = false
     
@@ -30,11 +30,33 @@ struct BitEditor: View {
     @State private var cancelAlert = false
     @State private var editTags = false
     @FocusState private var keyboardFocused: Bool
+    
+    @State private var hasChanges = false
 
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
     var dismissNavigation: DismissAction? = nil
+    
+    init(bit: Bit? = nil, bob: Bob, bits: [Bit], dismissNavigation: DismissAction? = nil) {
+        self.bit = bit
+        self.bob = bob
+        self.bits = bits
+        
+        if let bit {
+            self.create = false
+            self._name = State(initialValue: bit.name ?? "")
+            self._desc = State(initialValue: bit.desc ?? "")
+            self._paragraph = State(initialValue: bit.paragraph ?? "")
+            self._image = State(initialValue: bit.image != nil ? UIImage(data: bit.image!)! : UIImage())
+            self._tags = State(initialValue: bit.tags ?? [])
+            self._attributes = State(initialValue: bit.attributes ?? [:])
+            self._checked = State(initialValue: bit.checked)
+            if paragraph.filter({ $0 != " " }).isEmpty {
+                self.paragraph = ""
+            }
+        }
+    }
 
     var body: some View {
         
@@ -53,6 +75,9 @@ struct BitEditor: View {
                         }
                     }
                     .padding(.top, 10)
+                    .onChange(of: image) { _ in
+                        hasChanges = true
+                    }
                     Spacer()
                 }) { }
                 
@@ -62,12 +87,18 @@ struct BitEditor: View {
                         Spacer()
                         TextField("Name", text: self.$name)
                             .multilineTextAlignment(.trailing)
+                            .onChange(of: name) { _ in
+                                hasChanges = true
+                            }
                     }
                     AStack {
                         Text("Description")
                         Spacer()
                         TextField("Description", text: self.$desc)
                             .multilineTextAlignment(.trailing)
+                            .onChange(of: desc) { _ in
+                                hasChanges = true
+                            }
                     }
                     AStack {
                         Text("Collection")
@@ -87,6 +118,7 @@ struct BitEditor: View {
                             Spacer()
                             Checkmark(checked: checked) {
                                 self.checked.toggle()
+                                hasChanges = true
                             }
                             .padding(.vertical, 3)
                         }
@@ -170,6 +202,7 @@ struct BitEditor: View {
                     }
                 }
                 .onChange(of: tags) { tags in
+                    hasChanges = true
                     while self.tags.count >= 2 && self.tags[self.tags.count-2].isEmpty && self.tags[self.tags.count-1].isEmpty {
                         self.tags.removeLast()
                     }
@@ -193,10 +226,16 @@ struct BitEditor: View {
                             }
                         }
                     }
+                    .onChange(of: attributes) { _ in
+                        hasChanges = true
+                    }
                 }
                 
                 Section(header: Text("Text").font(.callout)) {
                     TextField("Text", text: self.$paragraph, axis: .vertical)
+                        .onChange(of: paragraph) { _ in
+                            hasChanges = true
+                        }
                 }
                 
                 if !create {
@@ -217,7 +256,7 @@ struct BitEditor: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
-                        if create && name.isEmpty {
+                        if !hasChanges {
                             self.presentationMode.wrappedValue.dismiss()
                         } else {
                             self.cancelAlert.toggle()
@@ -266,21 +305,6 @@ struct BitEditor: View {
         }
         .interactiveDismissDisabled()
         .tint(PersistenceController.themeColor)
-        .onAppear {
-            if let bit {
-                self.create = false
-                self.name = bit.name ?? ""
-                self.desc = bit.desc ?? ""
-                self.paragraph = bit.paragraph ?? ""
-                self.image = bit.image != nil ? UIImage(data: bit.image!)! : UIImage()
-                self.tags = bit.tags ?? []
-                self.attributes = bit.attributes ?? [:]
-                self.checked = bit.checked
-                if paragraph.filter({ $0 != " " }).isEmpty {
-                    paragraph = ""
-                }
-            }
-        }
     }
     
     func removeBit() {
