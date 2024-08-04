@@ -34,110 +34,85 @@ struct BitView: View {
                     ZStack {
                         
                         Group {
-                            if let imageData = bit.image, let _ = UIImage(data: imageData) {
-                                if let imageData = bob.image, let image = UIImage(data: imageData) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .blur(radius: 7)
-                                        .opacity(0.2)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                        .cornerRadius(20)
-                                        .padding(10)
-                                }
-                                else {
-                                    Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                        .cornerRadius(20)
-                                        .padding(10)
-                                }
-                            }
-                            else if let imageData = bob.image, let image = UIImage(data: imageData) {
+                            if let imageData = bob.image, let image = UIImage(data: imageData) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .blur(radius: 7)
                                     .opacity(0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
                             else {
                                 Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
+                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(20)
                                     .padding(10)
                             }
                         }
                         
                         VStack {
+                            let uiImage = bit.image != nil ? UIImage(data: bit.image!) : nil
+                                
+                            Spacer()
                             
-                            if let image = bit.image, let uiImage = UIImage(data: image) {
-                                
-                                Spacer()
-                                
-                                Icon(image: uiImage, size: UIScreen.main.bounds.height*0.35)
-                                    .shadow(color: .black.opacity(0.5), radius: 20)
-                            }
+                            Icon(image: uiImage, size: UIScreen.main.bounds.height*0.35, faded: bob.listType == 1 && !bit.checked)
+                                .shadow(color: .black.opacity(0.5), radius: 20)
+                                .overlay {
+                                    if uiImage == nil {
+                                        Text(String(bit.name?.first ?? " "))
+                                            .font(.system(size: UIScreen.main.bounds.height*0.35/2, weight: .black, design: .rounded))
+                                            .foregroundColor(.gray)
+                                            .opacity(0.2)
+                                    }
+                                }
+                                .overlay(alignment: .bottomLeading) {
+                                    if bob.listType == 2 {
+                                        Text(String(bit.order+1))
+                                            .font(.system(size: 48, design: .rounded).weight(.heavy))
+                                            .lineLimit(0)
+                                            .tracking(-0.5)
+                                            .monospacedDigit()
+                                            .foregroundColor(Color(UIColor.label))
+                                            .padding(.horizontal, 5)
+                                            .minimumScaleFactor(0.05)
+                                            .frame(width: 64, height: 64)
+                                            .background(Circle().fill(Color(UIColor.systemBackground)))
+                                            .overlay(RoundedRectangle(cornerRadius: 64).stroke(Color(uiColor: .systemGray5), lineWidth: 64/15))
+                                            .shadow(color: .black.opacity(0.5), radius: 20)
+                                    }
+                                }
+                                .overlay(alignment: .bottomTrailing) {
+                                    if bob.listType == 1 {
+                                        Check(bob: bob, bit: bit, update: $update, scaleFactor: 2)
+                                            .shadow(color: .black.opacity(0.5), radius: 20)
+                                    }
+                                }
                             
                             Spacer()
                             
-                            HStack {
-                                
-                                if bob.listType == 2 {
-                                    Text(String(bit.order+1))
-                                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
-                                        .tracking(-0.5)
-                                        .foregroundColor(Color(UIColor.label))
-                                        .frame(width: 48, height: 48)
-                                        .lineLimit(0)
-                                        .minimumScaleFactor(0.5)
-                                        .padding(10)
-                                }
-                                else if bob.listType == 1 {
-                                    Circle()
-                                        .frame(width: 48, height: 48)
-                                        .opacity(0)
-                                        .padding(10)
-                                }
-                                
-                                Spacer()
-                            
-                                VStack {
-                                    Text(bit.name ?? "")
-                                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
-                                        .tracking(-0.5)
+                            VStack {
+                                Text(bit.name ?? "")
+                                    .font(.system(.largeTitle, design: .rounded).weight(.heavy))
+                                    .tracking(-0.5)
+                                    .lineLimit(0)
+                                    .minimumScaleFactor(0.2)
+                                    .foregroundColor(Color(UIColor.label))
+
+                                if let desc = bit.desc, !desc.isEmpty {
+                                    Text(desc)
+                                        .font(.system(.headline, design: .rounded).weight(.heavy))
+                                        .tracking(-0.25)
                                         .lineLimit(0)
                                         .minimumScaleFactor(0.2)
-                                        .foregroundColor(Color(UIColor.label))
-
-                                    if let desc = bit.desc, !desc.isEmpty {
-                                        Text(desc)
-                                            .font(.system(.headline, design: .rounded).weight(.heavy))
-                                            .tracking(-0.25)
-                                            .lineLimit(0)
-                                            .minimumScaleFactor(0.2)
-                                            .foregroundColor(Color(UIColor.systemGray))
-                                    }
-                                }
-                                .padding(.horizontal)
-                                
-                                Spacer()
-                                
-                                if bob.listType == 1 {
-                                    Check(bob: bob, bit: bit, update: $update, scaleFactor: 1.5)
-                                        .padding(10)
-                                }
-                                else if bob.listType == 2 {
-                                    Circle()
-                                        .frame(width: 48, height: 48)
-                                        .opacity(0)
-                                        .padding(10)
+                                        .foregroundColor(Color(UIColor.systemGray))
                                 }
                             }
-                            .padding(.bottom, 20)
+                            .padding(.horizontal)
+                            .padding(.bottom, 30)
                         }
-                        .frame(width: max(geometry.size.width-20, 1), height: bit.image != nil ? UIScreen.main.bounds.height*0.5 : UIScreen.main.bounds.height*0.15)
+                        .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                         .padding(10)
                     }
                     .id(update)

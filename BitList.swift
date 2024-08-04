@@ -225,25 +225,28 @@ struct BitList: View {
     
     private func bitGridItem(bit: Bit, size: CGFloat) -> some View {
         VStack {
-            ZStack(alignment: .bottomTrailing) {
-                icon(bit: bit, size: size)
-                
-                if bob.listType == 1 {
-                    Check(bob: bob, bit: bit, update: $update, scaleFactor: size/80)
-                }
-                if bob.listType == 2 {
-                    VStack {
-                        Spacer()
+            icon(bit: bit, size: size)
+                .overlay(alignment: .bottomLeading) {
+                    if bob.listType == 2 {
                         Text(String(bit.order+1))
-                            .font(.system(bit.order < 9 ? .title : .title2, design: .rounded).weight(.black))
-                            .foregroundColor(.white)
-                            .minimumScaleFactor(0.5)
-                            .shadow(color: .secondary, radius: 5)
-                            .scaleEffect(display == .smallGrid ? 0.7 : 0.9)
+                            .font(.system(size: 48*size/80, design: .rounded).weight(.heavy))
+                            .lineLimit(0)
+                            .monospacedDigit()
+                            .tracking(-0.5)
+                            .foregroundColor(Color(UIColor.label))
+                            .padding(.horizontal, 5*size/80)
+                            .minimumScaleFactor(0.05)
+                            .frame(width: 32*size/80, height: 32*size/80)
+                            .background(Circle().fill(Color(UIColor.systemBackground)))
+                            .overlay(RoundedRectangle(cornerRadius: 32*size/80).stroke(Color(uiColor: .systemGray5), lineWidth: 32*size/80/15))
+                            .shadow(color: .black.opacity(0.5), radius: 20)
                     }
-                    .frame(width: size, height: size, alignment: .center)
                 }
-            }
+                .overlay(alignment: .bottomTrailing) {
+                    if bob.listType == 1 {
+                        Check(bob: bob, bit: bit, update: $update, scaleFactor: size/80)
+                    }
+                }
             
             if display == .largeGrid {
                 Text(bit.name ?? "")
