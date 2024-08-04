@@ -25,12 +25,12 @@ struct AttrEditor: View {
     @State var maxCount: String = ""
     
     // Organization
-    @State var sortable: Bool = true
+    @State var sortable: Bool = false
     @State var groupable: Bool = false
     @State var taggable: Bool = false
     
     // Text
-    @State var presets: [String] = []
+    @State var presets: [String] = [""]
     
     // Numbers
     @State var decimal: Bool = false
@@ -92,18 +92,6 @@ struct AttrEditor: View {
             
             // Booleans
             self._boolType = State(initialValue: Int(attribute.boolType))
-            
-            if bob != nil {
-                for bit in bob!.bitArray {
-                    for value in bit.allAttributeValues(attribute.name) {
-                        if !self.presets.contains(value) && value != "" {
-                            self.presets += [value]
-                        }
-                    }
-                }
-            }
-            self.presets.removeAll(where: { $0 == "" })
-            self.presets += [""]
         }
         
         self.hasChanges = false
@@ -191,28 +179,30 @@ struct AttrEditor: View {
                 if self.type == 0 {
                     Section {
                         
+                        Toggle(isOn: self.$groupable) {
+                            Text("Grouping")
+                        }
+                        .onChange(of: groupable) { _ in
+                            hasChanges = true
+                        }
+                        
                         if !self.allowMultiple {
                             Toggle(isOn: self.$sortable) {
-                                Text("Sortable")
+                                Text("Sorting")
                             }
                             .onChange(of: sortable) { _ in
                                 hasChanges = true
                             }
                         }
                         
-                        Toggle(isOn: self.$groupable) {
-                            Text("Groupable")
-                        }
-                        .onChange(of: groupable) { _ in
-                            hasChanges = true
-                        }
-                        
                         Toggle(isOn: self.$taggable) {
-                            Text("Filterable")
+                            Text("Filtering")
                         }
                         .onChange(of: taggable) { _ in
                             hasChanges = true
                         }
+                    } footer: {
+                        Text("Allow the collection to be organized based on this attribute.")
                     }
                     
                     Section(header: HStack {
@@ -229,18 +219,31 @@ struct AttrEditor: View {
                             }
                             .padding(.leading)
                         }
-                    }) {
+                    }, footer: Text("Possible values for this attribute. When assigning an item a value for this attribute, access the presets from the dropdown.")
+                    ){
                         ForEach(self.presets.indices, id: \.self) { p in
                             TextField("Value", text: Binding(
                                 get: { self.presets[p] },
-                                set: { self.presets[p] = $0 }))
+                                set: { self.presets[p] = $0; hasChanges = true }))
                             .foregroundColor(Color(UIColor.label))
                         }
                         .onMove(perform: moveAttributePresets)
                         .onDelete(perform: removeAttributePresets)
                     }
+                    .onAppear {
+                        if let bob, let attribute {
+                            for bit in bob.bitArray {
+                                for value in bit.allAttributeValues(attribute.name) {
+                                    if !self.presets.contains(value) && value != "" {
+                                        self.presets += [value]
+                                    }
+                                }
+                            }
+                        }
+                        self.presets.removeAll(where: { $0 == "" })
+                        self.presets += [""]
+                    }
                     .onChange(of: presets) { presets in
-                        hasChanges = true
                         if presets.last != "" {
                             self.presets += [""]
                         }
@@ -254,7 +257,7 @@ struct AttrEditor: View {
                     Section {
                         
                         Toggle(isOn: self.$decimal) {
-                            Text("Allow Decimals")
+                            Text("Decimals")
                         }
                         .onChange(of: decimal) { _ in
                             hasChanges = true
@@ -284,27 +287,42 @@ struct AttrEditor: View {
                         .onChange(of: suffix) { _ in
                             hasChanges = true
                         }
+                    } footer: {
+                        Text("Display a prefix and/or suffix with the number. (currency, units, etc.)")
                     }
                     
-                    if !self.decimal {
-                    
-                        Section {
+                    Section {
+                        
+                        if !self.decimal {
                             
                             Toggle(isOn: self.$groupable) {
-                                Text("Groupable")
+                                Text("Grouping")
                             }
                             .onChange(of: groupable) { _ in
                                 hasChanges = true
                             }
                             
+                        }
+                        
+                        Toggle(isOn: self.$sortable) {
+                            Text("Sorting")
+                        }
+                        .onChange(of: sortable) { _ in
+                            hasChanges = true
+                        }
+                        
+                        if !self.decimal {
+                            
                             Toggle(isOn: self.$taggable) {
-                                Text("Filterable")
+                                Text("Filtering")
                             }
                             .onChange(of: taggable) { _ in
                                 hasChanges = true
                             }
                             
                         }
+                    } footer: {
+                        Text("Allow the collection to be organized based on this attribute.")
                     }
                 }
                 else if type == 2 {
@@ -325,12 +343,21 @@ struct AttrEditor: View {
                     
                     Section {
                         
+                        Toggle(isOn: self.$groupable) {
+                            Text("Grouping")
+                        }
+                        .onChange(of: groupable) { _ in
+                            hasChanges = true
+                        }
+                        
                         Toggle(isOn: self.$taggable) {
-                            Text("Filterable")
+                            Text("Filtering")
                         }
                         .onChange(of: taggable) { _ in
                             hasChanges = true
                         }
+                    } footer: {
+                        Text("Allow the collection to be organized based on this attribute.")
                     }
                 }
                 
@@ -486,9 +513,7 @@ struct AttrEditor: View {
             self.attributes.removeLast()
         }
         
-        if hasChanges {
-            bobHasChanges = true
-        }
+        bobHasChanges = true
 
         presentationMode.wrappedValue.dismiss()
     }

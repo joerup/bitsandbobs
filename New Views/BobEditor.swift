@@ -128,7 +128,7 @@ struct BobEditor: View {
                         .padding(.leading)
                     }
                 },
-                    footer: Text("Each item in the collection can be given a value for each attribute.")
+                    footer: Text("Properties of items in the collection. Each item has an individual value for each attribute.")
                 ) {
                     ForEach(self.attributes, id: \.self) { attribute in
                         Button(action: {

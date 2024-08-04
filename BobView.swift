@@ -171,8 +171,8 @@ struct BobView: View {
                                                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                 .dynamicTypeSize(..<DynamicTypeSize.xLarge)
                                                 .foregroundColor((checkedOnly ?? false) ? .white : .primary)
-                                                .frame(width: 32, height: 32)
-                                                .background(RoundedRectangle(cornerRadius: 15).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                                .frame(width: 40, height: 40)
+                                                .background(RoundedRectangle(cornerRadius: 25).fill((checkedOnly ?? false) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                         }
                                         Button {
                                             if let checkedOnly, !checkedOnly {
@@ -185,8 +185,8 @@ struct BobView: View {
                                                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                                                 .dynamicTypeSize(..<DynamicTypeSize.xLarge)
                                                 .foregroundColor(!(checkedOnly ?? true) ? .white : .primary)
-                                                .frame(width: 32, height: 32)
-                                                .background(RoundedRectangle(cornerRadius: 15).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
+                                                .frame(width: 40, height: 40)
+                                                .background(RoundedRectangle(cornerRadius: 25).fill(!(checkedOnly ?? true) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                         }
                                     }
                                 }
@@ -201,11 +201,12 @@ struct BobView: View {
                                                 }
                                             } label: {
                                                 Text(tag)
-                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                    .font(.system(.callout, design: .rounded).weight(.semibold))
                                                     .foregroundColor(tags.contains(tag) ? .white : .primary)
                                                     .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
-                                                    .frame(height: 32)
+                                                    .frame(height: 40)
+                                                    .frame(minWidth: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -225,11 +226,12 @@ struct BobView: View {
                                             } label: {
                                                 let filterActive = attributeFilters.contains(where: { $0.attribute == filter.attribute && $0.value == filter.value })
                                                 Text(attributeValueText(attribute: attribute, value: value))
-                                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                                    .font(.system(.callout, design: .rounded).weight(.semibold))
                                                     .foregroundColor(filterActive ? .white : .primary)
                                                     .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
-                                                    .frame(height: 32)
+                                                    .frame(height: 40)
+                                                    .frame(minWidth: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -441,7 +443,7 @@ struct BobView: View {
     func getGroupable() -> [Attribute] {
         var groupable: [Attribute] = []
         for attribute in self.bob.attributeList {
-            if (attribute.type == 0 && attribute.groupable) || (attribute.type == 1 && attribute.groupable && !attribute.decimal) || attribute.type == 2 {
+            if (attribute.type == 0 && attribute.groupable) || (attribute.type == 1 && attribute.groupable && !attribute.decimal) || (attribute.type == 2 && attribute.groupable) {
                 groupable += [attribute]
             }
         }
@@ -484,7 +486,7 @@ struct BobView: View {
     func getSortable() -> [Attribute] {
         var sortable: [Attribute] = []
         for attribute in self.bob.attributeList {
-            if (attribute.type == 0 && attribute.sortable) || attribute.type == 1, !attribute.allowMultiple {
+            if (attribute.type == 0 && attribute.sortable) || (attribute.type == 1 && attribute.sortable), !attribute.allowMultiple {
                 sortable += [attribute]
             }
         }
