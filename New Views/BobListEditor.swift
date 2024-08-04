@@ -11,7 +11,7 @@ struct BobListEditor: View {
         
     @Environment(\.managedObjectContext) var managedObjectContext
     
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     @FetchRequest(
         entity: Bob.entity(),
@@ -21,6 +21,7 @@ struct BobListEditor: View {
     ) private var bobs: FetchedResults<Bob>
     
     @State private var deleteBob: Bob? = nil
+    @State private var deleteBob2: Bob? = nil
     
     var body: some View {
         NavigationStack {
@@ -34,12 +35,12 @@ struct BobListEditor: View {
                 .alert(item: $deleteBob) { bob in
                     Alert(
                         title: Text("Delete \(bob.name ?? "")"),
-                        message: Text("Are you absolutely sure you want to delete this collection? This will also delete all of the items, attributes, and settings it contains. This action cannot be undone."),
+                        message: Text("Are you sure you want to delete this collection?"),
                         primaryButton: .cancel() {
                             deleteBob = nil
                         },
                         secondaryButton: .destructive(Text("Delete")) {
-                            removeBob(bob)
+                            deleteBob2 = bob
                             deleteBob = nil
                         }
                     )
@@ -51,7 +52,7 @@ struct BobListEditor: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         Text("Done")
                             .font(.system(.headline, design: .rounded).bold())
@@ -59,6 +60,19 @@ struct BobListEditor: View {
                 }
             }
             .tint(PersistenceController.themeColor)
+            .alert(item: $deleteBob2) { bob in
+                Alert(
+                    title: Text("Delete \(bob.name ?? "")"),
+                    message: Text("Are you absolutely sure you want to delete this collection? This will also delete all of the items, attributes, and settings it contains. This action cannot be undone."),
+                    primaryButton: .cancel() {
+                        deleteBob2 = nil
+                    },
+                    secondaryButton: .destructive(Text("Delete")) {
+                        removeBob(bob)
+                        deleteBob2 = nil
+                    }
+                )
+            }
         }
     }
     
@@ -87,6 +101,7 @@ struct BobListEditor: View {
         reivsedItems.remove(at: index)
         managedObjectContext.delete(bob)
         reorderBobs(reivsedItems)
+        PersistenceController.shared.save()
     }
     
     func reorderBobs(_ array: [Bob]) {
@@ -96,6 +111,5 @@ struct BobListEditor: View {
             revisedItems[index].order = Int16(index)
             index += 1
         }
-        PersistenceController.shared.save()
     }
 }

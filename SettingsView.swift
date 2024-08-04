@@ -14,7 +14,7 @@ struct SettingsView: View {
     
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
     
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @EnvironmentObject var premium: Premium
     
     @State private var presentShare = false
@@ -101,7 +101,7 @@ struct SettingsView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }) {
                             Text("Done")
                                 .font(.system(.headline, design: .rounded).bold())

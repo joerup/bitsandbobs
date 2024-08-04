@@ -11,12 +11,14 @@ struct BitListEditor: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
     
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     var bob: Bob
     var bits: [Bit] {
         return bob.bitArray
     }
+    
+    @State private var deleteBit: Bit? = nil
     
     var body: some View {
         NavigationStack {
@@ -27,6 +29,19 @@ struct BitListEditor: View {
                 }
                 .onMove(perform: moveBits)
                 .onDelete(perform: removeBits)
+                .alert(item: $deleteBit) { bit in
+                    Alert(
+                        title: Text("Delete \(bit.name ?? "")"),
+                        message: Text("Are you sure you want to delete this item?"),
+                        primaryButton: .cancel() {
+                            deleteBit = nil
+                        },
+                        secondaryButton: .destructive(Text("Delete")) {
+                            removeBit(bit)
+                            deleteBit = nil
+                        }
+                    )
+                }
             }
             .environment(\.editMode, .constant(EditMode.active))
             .navigationTitle("Edit Items")
@@ -34,7 +49,7 @@ struct BitListEditor: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         Text("Done")
                             .font(.system(.headline, design: .rounded).bold())
@@ -54,17 +69,18 @@ struct BitListEditor: View {
         bob.bits = NSSet(array: revisedItems)
         PersistenceController.shared.save()
     }
-
+    
     func removeBits(offsets: IndexSet) {
-        var revisedItems: [Bit] = bits
         for index in offsets {
-            // Find the bit with the index relative to the starting group
-            let bit = bits[index]
-            // Remove the bit
-            revisedItems.remove(at: Int(bit.order))
-            bob.bits = NSSet(array: revisedItems)
-            managedObjectContext.delete(bit)
+            deleteBit = bits[index]
         }
+    }
+    
+    func removeBit(_ bit: Bit) {
+        var revisedItems: [Bit] = bits
+        revisedItems.remove(at: Int(bit.order))
+        bob.bits = NSSet(array: revisedItems)
+        managedObjectContext.delete(bit)
         reorderBits(revisedItems)
         PersistenceController.shared.save()
     }
@@ -78,7 +94,6 @@ struct BitListEditor: View {
         }
         bob.bits = NSSet(array: revisedItems)
         bob.nextBitID = Int16(revisedItems.count)
-        PersistenceController.shared.save()
     }
 
 }

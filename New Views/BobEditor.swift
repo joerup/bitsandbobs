@@ -31,10 +31,11 @@ struct BobEditor: View {
     @State private var cancelAlert = false
     
     @State private var deleteBob = false
+    @State private var deleteBob2 = false
     
     @State private var hasChanges = false
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     @Environment(\.managedObjectContext) var managedObjectContext
     var dismissNavigation: DismissAction? = nil
@@ -99,17 +100,28 @@ struct BobEditor: View {
                                 hasChanges = true
                             }
                     }
-                    Picker("Collection Type", selection: self.$listType) {
-                        Text("Basic")
-                            .tag(0)
-                        Text("Checklist")
-                            .tag(1)
-                        Text("Ranking")
-                            .tag(2)
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: listType) { _ in
-                        hasChanges = true
+                    AStack {
+                        Text("Collection Type")
+                        Spacer()
+                        Menu {
+                            Button("Standard") {
+                                listType = 0
+                            }
+                            Button("Checklist") {
+                                listType = 1
+                            }
+                            Button("Ranking") {
+                                listType = 2
+                            }
+                        } label: {
+                            HStack {
+                                Text(listType == 0 ? "Standard" : listType == 1 ? "Checklist" : "Ranking")
+                                Image(systemName: "chevron.up.chevron.down").imageScale(.small)
+                            }
+                        }
+                        .onChange(of: listType) { _ in
+                            hasChanges = true
+                        }
                     }
                 }
                 
@@ -189,7 +201,7 @@ struct BobEditor: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         if !hasChanges {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         } else {
                             self.cancelAlert.toggle()
                         }
@@ -199,7 +211,7 @@ struct BobEditor: View {
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Collection" : "Discard Changes", role: .destructive) {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                             PersistenceController.shared.discard()
                         }
                         Button(create ? "Save Collection" : "Save Changes") {
@@ -224,20 +236,33 @@ struct BobEditor: View {
             .alert(isPresented: $deleteBob) {
                 Alert(
                     title: Text("Delete \(self.name)"),
-                    message: Text("Are you absolutely sure you want to delete this collection? This will also delete all of the items, attributes, and settings it contains. This action cannot be undone."),
+                    message: Text("Are you sure you want to delete this collection?"),
                     primaryButton: .cancel() {
                         deleteBob = false
                     },
                     secondaryButton: .destructive(Text("Delete")) {
-                        presentationMode.wrappedValue.dismiss()
-                        dismissNavigation?()
-                        removeBob()
+                        deleteBob = false
+                        deleteBob2 = true
                     }
                 )
             }
         }
         .interactiveDismissDisabled()
         .tint(PersistenceController.themeColor)
+        .alert(isPresented: $deleteBob2) {
+            Alert(
+                title: Text("Delete \(self.name)"),
+                message: Text("Are you absolutely sure you want to delete this collection? This will also delete all of the items, attributes, and settings it contains. This action cannot be undone."),
+                primaryButton: .cancel() {
+                    deleteBob2 = false
+                },
+                secondaryButton: .destructive(Text("Delete")) {
+                    dismiss()
+                    dismissNavigation?()
+                    removeBob()
+                }
+            )
+        }
     }
     
     func getAttributeDescription(_ attribute: Attribute) -> String {
@@ -304,7 +329,7 @@ struct BobEditor: View {
         
         PersistenceController.shared.save()
 
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
     
     func moveAttributes(from source: IndexSet, to destination: Int) {
@@ -348,6 +373,7 @@ struct BobEditor: View {
         revisedItems.remove(at: index)
         managedObjectContext.delete(bob)
         reorderBobs(revisedItems)
+        PersistenceController.shared.save()
     }
     
     func reorderBobs(_ array: [Bob]) {
@@ -357,7 +383,6 @@ struct BobEditor: View {
             revisedItems[index].order = Int16(index)
             index += 1
         }
-        PersistenceController.shared.save()
     }
 }
 

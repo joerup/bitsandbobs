@@ -33,7 +33,7 @@ struct BitEditor: View {
     
     @State private var hasChanges = false
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     @Environment(\.managedObjectContext) var managedObjectContext
     var dismissNavigation: DismissAction? = nil
@@ -42,6 +42,7 @@ struct BitEditor: View {
         self.bit = bit
         self.bob = bob
         self.bits = bits
+        self.dismissNavigation = dismissNavigation
         
         if let bit {
             self.create = false
@@ -129,7 +130,6 @@ struct BitEditor: View {
                     WrappingHStack(0...self.tags.count, id: \.self) { t in
                         ZStack(alignment: .topTrailing) {
                             ZStack {
-                                Text("Tag").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
                                 Text(t < tags.count ? tags[t] : "").font(.system(.headline, design: .rounded).weight(.semibold)).opacity(0).disabled(true)
                                     .overlay {
                                         if t == tags.count {
@@ -185,7 +185,9 @@ struct BitEditor: View {
                                     }
                             }
                             .padding(10)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(uiColor: .systemGray6)))
+                            .padding(.horizontal, 5)
+                            .frame(minWidth: 40, minHeight: 40)
+                            .background(RoundedRectangle(cornerRadius: 15).fill(Color(uiColor: .systemGray6)))
                             .padding(.vertical, 5)
                             
                             if t < tags.count {
@@ -257,7 +259,7 @@ struct BitEditor: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         if !hasChanges {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         } else {
                             self.cancelAlert.toggle()
                         }
@@ -267,7 +269,7 @@ struct BitEditor: View {
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Item" : "Discard Changes", role: .destructive) {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }
                         Button(create ? "Save Item" : "Save Changes") {
                             saveBit()
@@ -296,7 +298,7 @@ struct BitEditor: View {
                         deleteBit = false
                     },
                     secondaryButton: .destructive(Text("Delete")) {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                         dismissNavigation?()
                         removeBit()
                     }
@@ -376,7 +378,7 @@ struct BitEditor: View {
         
         PersistenceController.shared.save()
 
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
 }
 

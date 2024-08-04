@@ -152,7 +152,7 @@ struct BobView: View {
                             let filterableAttributes = bob.attributeList.filter { $0.taggable }
                             if bob.tagList.isEmpty && bob.listType != 1 && filterableAttributes.isEmpty {
                                 Text("No filters available")
-                                    .font(.caption)
+                                    .font(.callout)
                                     .foregroundColor(.gray)
                                     .padding(.horizontal, 10)
                                     .padding(5)
@@ -205,8 +205,8 @@ struct BobView: View {
                                                     .foregroundColor(tags.contains(tag) ? .white : .primary)
                                                     .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
-                                                    .frame(height: 40)
-                                                    .frame(minWidth: 40)
+                                                    .padding(.horizontal, 5)
+                                                    .frame(minWidth: 40, minHeight: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -230,8 +230,8 @@ struct BobView: View {
                                                     .foregroundColor(filterActive ? .white : .primary)
                                                     .dynamicTypeSize(..<DynamicTypeSize.xxxLarge)
                                                     .padding(10)
-                                                    .frame(height: 40)
-                                                    .frame(minWidth: 40)
+                                                    .padding(.horizontal, 5)
+                                                    .frame(minWidth: 40, minHeight: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }

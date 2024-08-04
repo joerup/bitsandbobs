@@ -49,7 +49,7 @@ struct AttrEditor: View {
     @Binding var bobHasChanges: Bool
     @State private var hasChanges = false
 
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     @Environment(\.managedObjectContext) var managedObjectContext
     
@@ -123,19 +123,28 @@ struct AttrEditor: View {
                         }
                     }
                     
-                    Picker("Data Type", selection: self.$type) {
-                        Text("Text")
-                            .tag(0)
-                        Text("Number")
-                            .tag(1)
-                        Text("Boolean")
-                            .tag(2)
-//                        Text("Date")
-//                            .tag(3)
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: type) { _ in
-                        hasChanges = true
+                    AStack {
+                        Text("Data Type")
+                        Spacer()
+                        Menu {
+                            Button("Text") {
+                                type = 0
+                            }
+                            Button("Number") {
+                                type = 1
+                            }
+                            Button("Boolean") {
+                                type = 2
+                            }
+                        } label: {
+                            HStack {
+                                Text(type == 0 ? "Text" : type == 1 ? "Number" : "Boolean")
+                                Image(systemName: "chevron.up.chevron.down").imageScale(.small)
+                            }
+                        }
+                        .onChange(of: type) { _ in
+                            hasChanges = true
+                        }
                     }
                 }
                 
@@ -328,16 +337,25 @@ struct AttrEditor: View {
                 else if type == 2 {
                     
                     Section {
-                    
-                        Picker("Display Type", selection: self.$boolType) {
-                            Text("True/False")
-                                .tag(0)
-                            Text("Yes/No")
-                                .tag(1)
-                        }
-                        .pickerStyle(.menu)
-                        .onChange(of: boolType) { _ in
-                            hasChanges = true
+                        AStack {
+                            Text("Display Type")
+                            Spacer()
+                            Menu {
+                                Button("True/False") {
+                                    boolType = 0
+                                }
+                                Button("Yes/No") {
+                                    boolType = 1
+                                }
+                            } label: {
+                                HStack {
+                                    Text(boolType == 0 ? "True/False" : "Yes/No")
+                                    Image(systemName: "chevron.up.chevron.down").imageScale(.small)
+                                }
+                            }
+                            .onChange(of: boolType) { _ in
+                                hasChanges = true
+                            }
                         }
                     }
                     
@@ -381,7 +399,7 @@ struct AttrEditor: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         if !hasChanges {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         } else {
                             self.cancelAlert.toggle()
                         }
@@ -391,7 +409,7 @@ struct AttrEditor: View {
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Attribute" : "Discard Changes", role: .destructive) {
-                            self.presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }
                         Button(create ? "Save Attribute" : "Save Changes") {
                             saveAttribute()
@@ -420,7 +438,7 @@ struct AttrEditor: View {
                         deleteAttribute = false
                     },
                     secondaryButton: .destructive(Text("Delete")) {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                         removeAttribute()
                     }
                 )
@@ -514,8 +532,12 @@ struct AttrEditor: View {
         }
         
         bobHasChanges = true
+        
+        // do not actually save (this is all nested within bob editor) but still play haptic
+        let impactMed = UIImpactFeedbackGenerator(style: .medium)
+        impactMed.impactOccurred()
 
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
     
     func removeAttribute() {

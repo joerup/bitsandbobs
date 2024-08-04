@@ -149,6 +149,8 @@ struct BitView: View {
                                 Text(tag)
                                     .font(.system(.headline, design: .rounded).weight(.semibold))
                                     .padding(10)
+                                    .padding(.horizontal, 5)
+                                    .frame(minWidth: 40, minHeight: 40)
                                     .background(RoundedRectangle(cornerRadius: 15).fill(Color(uiColor: .systemGray6)))
                                     .padding(.vertical, 5)
                             }
