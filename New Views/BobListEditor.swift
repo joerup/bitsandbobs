@@ -55,10 +55,10 @@ struct BobListEditor: View {
                     }) {
                         Text("Done")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(PersistenceController.themeColor)
                     }
                 }
             }
+            .tint(PersistenceController.themeColor)
         }
     }
     

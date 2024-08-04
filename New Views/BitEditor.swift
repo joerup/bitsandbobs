@@ -105,10 +105,8 @@ struct BitEditor: View {
                                                 } label: {
                                                     Image(systemName: "plus")
                                                         .font(.callout.weight(.semibold))
-                                                        .foregroundColor(PersistenceController.themeColor)
                                                         .padding(10)
                                                 }
-                                                .buttonStyle(.plain)
                                             } else {
                                                 Menu {
                                                     ForEach(allTags, id: \.self) { tag in
@@ -128,10 +126,8 @@ struct BitEditor: View {
                                                 } label: {
                                                     Image(systemName: "plus")
                                                         .font(.callout.weight(.semibold))
-                                                        .foregroundColor(PersistenceController.themeColor)
                                                         .padding(10)
                                                 }
-                                                .buttonStyle(.plain)
                                             }
                                         } else if t == tags.count-1 {
                                             TextField("Tag", text: Binding(
@@ -213,7 +209,6 @@ struct BitEditor: View {
                     }) {
                         Text("Cancel")
                             .font(.system(.headline, design: .rounded))
-                            .foregroundColor(PersistenceController.themeColor)
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Item" : "Discard Changes", role: .destructive) {
@@ -231,8 +226,8 @@ struct BitEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
+                    .disabled(self.name == "")
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the item a name."))
                     }
@@ -240,6 +235,7 @@ struct BitEditor: View {
             }
         }
         .interactiveDismissDisabled()
+        .tint(PersistenceController.themeColor)
         .onAppear {
             if let bit {
                 self.create = false
@@ -369,7 +365,6 @@ struct AttrValueSetter: View {
                     } label: {
                         Image(systemName: "chevron.down.circle")
                             .imageScale(.large)
-                            .foregroundColor(PersistenceController.themeColor)
                     }
                     .onChange(of: self.newValue, perform: { value in
                         setValue(value)
@@ -476,7 +471,6 @@ struct AttrValueSetter: View {
                     })) {
                         Text("")
                     }
-                    .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     .onChange(of: self.newValue, perform: { value in
                         setValue(value)
                     })
@@ -499,7 +493,6 @@ struct AttrValueSetter: View {
                             Text("")
                         }
                         .datePickerStyle(CompactDatePickerStyle())
-                        .accentColor(PersistenceController.themeColor)
                         Button {
                             self.newValue = ""
                         } label: {

@@ -86,7 +86,6 @@ struct AttrEditor: View {
 //                            .tag(3)
                     }
                     .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
                 }
                 
                 if self.type != 2 {
@@ -96,13 +95,12 @@ struct AttrEditor: View {
                         Toggle(isOn: self.$allowMultiple) {
                             Text("Multiple Values")
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         
                         if self.allowMultiple {
                             AStack {
-                                Text("Count")
+                                Text("Maximum Count")
                                 Spacer()
-                                TextField("Any", text: self.$maxCount, onCommit: {
+                                TextField("Unlimited", text: self.$maxCount, onCommit: {
                                     // Reject if less than 2 or not a number
                                     if Int(self.maxCount) == nil || Int(self.maxCount)! < 2 {
                                         self.maxCount = ""
@@ -118,10 +116,6 @@ struct AttrEditor: View {
                             }
                             .animation(.default, value: allowMultiple)
                         }
-                    } footer: {
-                        if allowMultiple {
-                            Text("Each item can have \(!allowMultiple ? "one value" : (maxCount == "" ? "any number of values" : "\(maxCount) values")) set for this attribute.")
-                        }
                     }
                 }
                 
@@ -132,18 +126,15 @@ struct AttrEditor: View {
                             Toggle(isOn: self.$sortable) {
                                 Text("Sortable")
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         }
                         
                         Toggle(isOn: self.$groupable) {
                             Text("Groupable")
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                         
                         Toggle(isOn: self.$taggable) {
                             Text("Filterable")
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                     
                     Section(header: HStack {
@@ -157,7 +148,6 @@ struct AttrEditor: View {
                             }) {
                                 Text(self.editPresets ? "Done" : "Edit")
                                     .font(.callout)
-                                    .foregroundColor(PersistenceController.themeColor)
                             }
                             .padding(.leading)
                         }
@@ -192,7 +182,6 @@ struct AttrEditor: View {
                         Toggle(isOn: self.$decimal) {
                             Text("Allow Decimals")
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                     
                     Section {
@@ -212,8 +201,6 @@ struct AttrEditor: View {
                                 .multilineTextAlignment(.trailing)
                                 .autocapitalization(.none)
                         }
-                    } footer: {
-                        Text("Titles, units, currency symbols, etc.")
                     }
                     
                     if !self.decimal {
@@ -223,12 +210,10 @@ struct AttrEditor: View {
                             Toggle(isOn: self.$groupable) {
                                 Text("Groupable")
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             
                             Toggle(isOn: self.$taggable) {
                                 Text("Filterable")
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                             
                         }
                     }
@@ -244,7 +229,6 @@ struct AttrEditor: View {
                                 .tag(1)
                         }
                         .pickerStyle(.menu)
-                        .accentColor(PersistenceController.themeColor)
                     }
                     
                     Section {
@@ -252,7 +236,6 @@ struct AttrEditor: View {
                         Toggle(isOn: self.$taggable) {
                             Text("Filterable")
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: PersistenceController.themeColor))
                     }
                 }
             }
@@ -270,7 +253,6 @@ struct AttrEditor: View {
                     }) {
                         Text("Cancel")
                             .font(.system(.headline, design: .rounded))
-                            .foregroundColor(PersistenceController.themeColor)
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Attribute" : "Discard Changes", role: .destructive) {
@@ -288,8 +270,8 @@ struct AttrEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
+                    .disabled(self.name == "")
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the attribute a name."))
                     }
@@ -297,6 +279,7 @@ struct AttrEditor: View {
             }
         }
         .interactiveDismissDisabled()
+        .tint(PersistenceController.themeColor)
         .onAppear {
             if attribute != nil {
                 self.name = attribute!.name ?? ""

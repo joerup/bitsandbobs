@@ -23,10 +23,7 @@ struct BobEditor: View {
 
     @State private var showDelete = false
     
-    @State private var newAttributeText = false
-    @State private var newAttributeNum = false
-    @State private var newAttributeBool = false
-    @State private var newAttributeDate = false
+    @State private var newAttribute = false
     
     @State private var editAttributes = false
     @State private var editAttribute: Attribute? = nil
@@ -83,7 +80,6 @@ struct BobEditor: View {
                             .tag(2)
                     }
                     .pickerStyle(.menu)
-                    .accentColor(PersistenceController.themeColor)
                 }
                 
                 Section(header: HStack {
@@ -97,7 +93,6 @@ struct BobEditor: View {
                         }) {
                             Text(self.editAttributes ? "Done" : "Edit")
                                 .font(.callout)
-                                .foregroundColor(PersistenceController.themeColor)
                         }
                         .padding(.leading)
                     }
@@ -122,50 +117,21 @@ struct BobEditor: View {
                     .onMove(perform: moveAttributes)
                     .onDelete(perform: removeAttributes)
                     
-                    Menu {
-                        Button {
-                            self.newAttributeText.toggle()
-                        } label: {
-                            Text("Text").textCase(nil)
-                        }
-                        Button {
-                            self.newAttributeNum.toggle()
-                        } label: {
-                            Text("Number").textCase(nil)
-                        }
-                        Button {
-                            self.newAttributeBool.toggle()
-                        } label: {
-                            Text("Boolean").textCase(nil)
-                        }
-//                        Button {
-//                            self.newAttributeDate.toggle()
-//                        } label: {
-//                            Text("Date").textCase(nil)
-//                        }
+                    Button {
+                        self.newAttribute.toggle()
                     } label: {
                         HStack {
                             Spacer()
                             Image(systemName: "plus")
                                 .font(.callout.weight(.semibold))
-                                .foregroundColor(PersistenceController.themeColor)
                             Spacer()
                         }
                     }
                 }
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
-            .sheet(isPresented: self.$newAttributeText) {
+            .sheet(isPresented: self.$newAttribute) {
                 AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 0)
-            }
-            .sheet(isPresented: self.$newAttributeNum) {
-                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 1)
-            }
-            .sheet(isPresented: self.$newAttributeBool) {
-                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 2)
-            }
-            .sheet(isPresented: self.$newAttributeDate) {
-                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, type: 3)
             }
             .sheet(item: self.$editAttribute) { attribute in
                 AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, create: false)
@@ -183,7 +149,6 @@ struct BobEditor: View {
                     }) {
                         Text("Cancel")
                             .font(.system(.headline, design: .rounded))
-                            .foregroundColor(PersistenceController.themeColor)
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Collection" : "Discard Changes", role: .destructive) {
@@ -201,8 +166,8 @@ struct BobEditor: View {
                     }) {
                         Text("Save")
                             .font(.system(.headline, design: .rounded).bold())
-                            .foregroundColor(self.name == "" ? .gray : PersistenceController.themeColor)
                     }
+                    .disabled(self.name == "")
                     .alert(isPresented: self.$createEmptyWarning) {
                         Alert(title: Text("Please give the collection a name."))
                     }
@@ -210,6 +175,7 @@ struct BobEditor: View {
             }
         }
         .interactiveDismissDisabled()
+        .tint(PersistenceController.themeColor)
         .onAppear {
             guard let bob else { return }
             self.create = false
