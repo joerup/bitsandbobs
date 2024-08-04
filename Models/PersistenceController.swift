@@ -69,11 +69,7 @@ struct PersistenceController {
         let context = container.viewContext
         
         if context.hasChanges {
-            do {
-                try context.reset()
-            } catch {
-                print("Failed to discard")
-            }
+            context.rollback()
         }
     }
     

@@ -178,10 +178,10 @@ struct BobEditor: View {
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
             .sheet(isPresented: self.$newAttribute) {
-                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob)
+                AttrEditor(attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, hasChanges: $hasChanges)
             }
             .sheet(item: self.$editAttribute) { attribute in
-                AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob)
+                AttrEditor(attribute: attribute, attributes: self.$attributes, nextAttrID: self.$nextAttrID, bob: bob, hasChanges: $hasChanges)
             }
             .navigationBarTitle(create ? "New Collection" : "Edit Collection")
             .navigationBarTitleDisplayMode(.inline)
@@ -200,6 +200,7 @@ struct BobEditor: View {
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Collection" : "Discard Changes", role: .destructive) {
                             self.presentationMode.wrappedValue.dismiss()
+                            PersistenceController.shared.discard()
                         }
                         Button(create ? "Save Collection" : "Save Changes") {
                             saveBob()
@@ -313,7 +314,6 @@ struct BobEditor: View {
             revisedItems[reverseIndex].order = Int16(reverseIndex)
         }
         self.attributes = revisedItems
-        PersistenceController.shared.save()
     }
     
     func removeAttributes(at offsets: IndexSet) {
@@ -335,7 +335,6 @@ struct BobEditor: View {
         }
         self.attributes = revisedItems
         self.nextAttrID = Int16(revisedItems.count)
-        PersistenceController.shared.save()
     }
     
     func removeBob() {

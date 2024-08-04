@@ -46,6 +46,7 @@ struct AttrEditor: View {
     
     @State private var deleteAttribute = false
     
+    @Binding var bobHasChanges: Bool
     @State private var hasChanges = false
 
     @Environment(\.presentationMode) var presentationMode
@@ -59,11 +60,13 @@ struct AttrEditor: View {
         return formatter
     }
     
-    init(attribute: Attribute? = nil, attributes: Binding<[Attribute]>, nextAttrID: Binding<Int16>, bob: Bob? = nil) {
+    init(attribute: Attribute? = nil, attributes: Binding<[Attribute]>, nextAttrID: Binding<Int16>, bob: Bob? = nil, hasChanges: Binding<Bool>) {
         self.attribute = attribute
         self._attributes = attributes
         self._nextAttrID = nextAttrID
         self.bob = bob
+        
+        self._bobHasChanges = hasChanges
         
         if let attribute {
             self.create = false
@@ -487,7 +490,9 @@ struct AttrEditor: View {
             self.attributes.removeLast()
         }
         
-        PersistenceController.shared.save()
+        if hasChanges {
+            bobHasChanges = true
+        }
 
         presentationMode.wrappedValue.dismiss()
     }
@@ -498,7 +503,6 @@ struct AttrEditor: View {
         revisedItems.remove(at: Int(attribute.order))
         managedObjectContext.delete(attribute)
         reorderAttributes(revisedItems)
-        PersistenceController.shared.save()
     }
     
     func reorderAttributes(_ array: [Attribute]) {
@@ -510,7 +514,6 @@ struct AttrEditor: View {
         }
         self.attributes = revisedItems
         self.nextAttrID = Int16(revisedItems.count)
-        PersistenceController.shared.save()
     }
 }
 
