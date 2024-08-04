@@ -104,14 +104,13 @@ struct BobEditor: View {
                         Text("Collection Type")
                         Spacer()
                         Menu {
-                            Button("Standard") {
-                                listType = 0
-                            }
-                            Button("Checklist") {
-                                listType = 1
-                            }
-                            Button("Ranking") {
-                                listType = 2
+                            Picker("", selection: $listType) {
+                                Text("Standard")
+                                    .tag(0)
+                                Text("Checklist")
+                                    .tag(1)
+                                Text("Ranking")
+                                    .tag(2)
                             }
                         } label: {
                             HStack {

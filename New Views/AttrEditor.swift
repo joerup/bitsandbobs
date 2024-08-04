@@ -127,14 +127,13 @@ struct AttrEditor: View {
                         Text("Data Type")
                         Spacer()
                         Menu {
-                            Button("Text") {
-                                type = 0
-                            }
-                            Button("Number") {
-                                type = 1
-                            }
-                            Button("Boolean") {
-                                type = 2
+                            Picker("", selection: $type) {
+                                Text("Text")
+                                    .tag(0)
+                                Text("Number")
+                                    .tag(1)
+                                Text("Boolean")
+                                    .tag(2)
                             }
                         } label: {
                             HStack {
@@ -228,7 +227,7 @@ struct AttrEditor: View {
                             }
                             .padding(.leading)
                         }
-                    }, footer: Text("Possible values for this attribute. When assigning an item a value for this attribute, access the presets from the dropdown.")
+                    }, footer: Text("Possible values for this attribute.")
                     ){
                         ForEach(self.presets.indices, id: \.self) { p in
                             TextField("Value", text: Binding(
@@ -341,11 +340,11 @@ struct AttrEditor: View {
                             Text("Display Type")
                             Spacer()
                             Menu {
-                                Button("True/False") {
-                                    boolType = 0
-                                }
-                                Button("Yes/No") {
-                                    boolType = 1
+                                Picker("", selection: $boolType) {
+                                    Text("True/False")
+                                        .tag(0)
+                                    Text("Yes/No")
+                                        .tag(1)
                                 }
                             } label: {
                                 HStack {
