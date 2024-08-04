@@ -158,7 +158,7 @@ class Samples {
             bit.name = "Animal \(i)"
             bit.image = UIImage(imageLiteralResourceName: "animal\(i)").pngData()
             bit.icon = bit.image?.compressed()
-            bit.order = Int16(i)
+            bit.order = Int16(i-1)
             bits2 += [bit]
         }
         

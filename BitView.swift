@@ -14,6 +14,8 @@ struct BitView: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
     
+    @Environment(\.dismiss) var dismiss
+    
     @State var bit: Bit
     var bob: Bob
 
@@ -185,7 +187,7 @@ struct BitView: View {
 
                 }
                 .sheet(isPresented: self.$editBit) {
-                    BitEditor(bit: bit, bob: bob)
+                    BitEditor(bit: bit, bob: bob, bits: bob.bitArray, dismissNavigation: dismiss)
                 }
             }
         }

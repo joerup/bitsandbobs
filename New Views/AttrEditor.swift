@@ -44,6 +44,8 @@ struct AttrEditor: View {
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
     
+    @State private var deleteAttribute = false
+    
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
@@ -238,6 +240,19 @@ struct AttrEditor: View {
                         }
                     }
                 }
+                
+                if !create {
+                    Button(role: .destructive) {
+                        self.deleteAttribute.toggle()
+                    } label: {
+                        HStack {
+                            Text("Delete Attribute")
+                            Spacer()
+                            Image(systemName: "trash")
+                                .font(.callout)
+                        }
+                    }
+                }
             }
             .environment(\.editMode, .constant(self.editPresets ? EditMode.active : EditMode.inactive))
             .navigationBarTitle(create ? "New Attribute" : "Edit Attribute")
@@ -276,6 +291,19 @@ struct AttrEditor: View {
                         Alert(title: Text("Please give the attribute a name."))
                     }
                 }
+            }
+            .alert(isPresented: $deleteAttribute) {
+                Alert(
+                    title: Text("Delete \(self.displayName)"),
+                    message: Text("Are you sure you want to delete this attribute?"),
+                    primaryButton: .cancel() {
+                        deleteAttribute = false
+                    },
+                    secondaryButton: .destructive(Text("Delete")) {
+                        presentationMode.wrappedValue.dismiss()
+                        removeAttribute()
+                    }
+                )
             }
         }
         .interactiveDismissDisabled()
@@ -403,6 +431,27 @@ struct AttrEditor: View {
         PersistenceController.shared.save()
 
         presentationMode.wrappedValue.dismiss()
+    }
+    
+    func removeAttribute() {
+        guard let attribute else { return }
+        var revisedItems: [Attribute] = attributes.map{ $0 }
+        revisedItems.remove(at: Int(attribute.order))
+        managedObjectContext.delete(attribute)
+        reorderAttributes(revisedItems)
+        PersistenceController.shared.save()
+    }
+    
+    func reorderAttributes(_ array: [Attribute]) {
+        let revisedItems = array
+        var index = 0
+        while index < revisedItems.count {
+            revisedItems[index].order = Int16(index)
+            index += 1
+        }
+        self.attributes = revisedItems
+        self.nextAttrID = Int16(revisedItems.count)
+        PersistenceController.shared.save()
     }
 }
 

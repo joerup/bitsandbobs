@@ -10,6 +10,7 @@ import SwiftUI
 struct BobEditor: View {
 
     var bob: Bob? = nil
+    var bobs: [Bob]
     
     @State var name = ""
     @State var desc = ""
@@ -20,21 +21,21 @@ struct BobEditor: View {
     @State var create = true
     
     @State var nextAttrID: Int16 = 0
-
-    @State private var showDelete = false
     
     @State private var newAttribute = false
     
     @State private var editAttributes = false
     @State private var editAttribute: Attribute? = nil
     
-    @State private var deleteAttribute = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
+    
+    @State private var deleteBob = false
 
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
+    var dismissNavigation: DismissAction? = nil
 
     var body: some View {
         
@@ -128,6 +129,19 @@ struct BobEditor: View {
                         }
                     }
                 }
+                
+                if !create {
+                    Button(role: .destructive) {
+                        self.deleteBob.toggle()
+                    } label: {
+                        HStack {
+                            Text("Delete Collection")
+                            Spacer()
+                            Image(systemName: "trash")
+                                .font(.callout)
+                        }
+                    }
+                }
             }
             .environment(\.editMode, .constant(self.editAttributes ? EditMode.active : EditMode.inactive))
             .sheet(isPresented: self.$newAttribute) {
@@ -172,6 +186,20 @@ struct BobEditor: View {
                         Alert(title: Text("Please give the collection a name."))
                     }
                 }
+            }
+            .alert(isPresented: $deleteBob) {
+                Alert(
+                    title: Text("Delete \(self.name)"),
+                    message: Text("Are you absolutely sure you want to delete this collection? This will also delete all of the items, attributes, and settings it contains. This action cannot be undone."),
+                    primaryButton: .cancel() {
+                        deleteBob = false
+                    },
+                    secondaryButton: .destructive(Text("Delete")) {
+                        presentationMode.wrappedValue.dismiss()
+                        dismissNavigation?()
+                        removeBob()
+                    }
+                )
             }
         }
         .interactiveDismissDisabled()
@@ -287,6 +315,29 @@ struct BobEditor: View {
         }
         self.attributes = revisedItems
         self.nextAttrID = Int16(revisedItems.count)
+        PersistenceController.shared.save()
+    }
+    
+    func removeBob() {
+        guard let bob else { return }
+        var revisedItems: [Bob] = bobs
+        // Remove any bits of that bob
+        for bit in bob.bitArray {
+            managedObjectContext.delete(bit)
+        }
+        let index = revisedItems.firstIndex(of: bob)!
+        revisedItems.remove(at: index)
+        managedObjectContext.delete(bob)
+        reorderBobs(revisedItems)
+    }
+    
+    func reorderBobs(_ array: [Bob]) {
+        let revisedItems = array
+        var index = 0
+        while index < revisedItems.count {
+            revisedItems[index].order = Int16(index)
+            index += 1
+        }
         PersistenceController.shared.save()
     }
 }

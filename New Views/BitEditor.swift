@@ -12,6 +12,7 @@ struct BitEditor: View {
     
     var bit: Bit? = nil
     var bob: Bob
+    var bits: [Bit]
     
     @State var name = ""
     @State var desc = ""
@@ -23,7 +24,8 @@ struct BitEditor: View {
     
     @State private var create = true
 
-    @State private var showDelete = false
+    @State private var deleteBit = false
+    
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
     @State private var editTags = false
@@ -32,6 +34,7 @@ struct BitEditor: View {
     @Environment(\.presentationMode) var presentationMode
     
     @Environment(\.managedObjectContext) var managedObjectContext
+    var dismissNavigation: DismissAction? = nil
 
     var body: some View {
         
@@ -192,8 +195,21 @@ struct BitEditor: View {
                     }
                 }
                 
-                Section(header: Text("Text").font(.callout), footer: Spacer().frame(height: 100)) {
+                Section(header: Text("Text").font(.callout)) {
                     TextField("Text", text: self.$paragraph, axis: .vertical)
+                }
+                
+                if !create {
+                    Button(role: .destructive) {
+                        self.deleteBit.toggle()
+                    } label: {
+                        HStack {
+                            Text("Delete Item")
+                            Spacer()
+                            Image(systemName: "trash")
+                                .font(.callout)
+                        }
+                    }
                 }
             }
             .navigationBarTitle(create ? "New Item" : "Edit Item")
@@ -233,6 +249,20 @@ struct BitEditor: View {
                     }
                 }
             }
+            .alert(isPresented: $deleteBit) {
+                Alert(
+                    title: Text("Delete \(self.name)"),
+                    message: Text("Are you sure you want to delete this item?"),
+                    primaryButton: .cancel() {
+                        deleteBit = false
+                    },
+                    secondaryButton: .destructive(Text("Delete")) {
+                        presentationMode.wrappedValue.dismiss()
+                        dismissNavigation?()
+                        removeBit()
+                    }
+                )
+            }
         }
         .interactiveDismissDisabled()
         .tint(PersistenceController.themeColor)
@@ -253,6 +283,27 @@ struct BitEditor: View {
         }
     }
     
+    func removeBit() {
+        guard let bit else { return }
+        var revisedItems: [Bit] = bits
+        // Remove the bit
+        revisedItems.remove(at: Int(bit.order))
+        managedObjectContext.delete(bit)
+        reorderBits(revisedItems)
+        PersistenceController.shared.save()
+    }
+    
+    func reorderBits(_ array: [Bit]) {
+        let revisedItems = array
+        var index = 0
+        while index < revisedItems.count {
+            revisedItems[index].order = Int16(index)
+            index += 1
+        }
+        bob.nextBitID = Int16(revisedItems.count)
+        PersistenceController.shared.save()
+    }
+        
     func saveBit() {
 
         guard self.name != "" else {

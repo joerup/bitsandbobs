@@ -11,8 +11,11 @@ import Foundation
 struct BobView: View {
     
     @Environment(\.managedObjectContext) var managedObjectContext
+    
+    @Environment(\.dismiss) var dismiss
 
     var bob: Bob
+    var bobs: [Bob]
     
     @State private var groups: [String] = []
     @State private var bitLists: [String:[Bit]] = [:]
@@ -39,8 +42,9 @@ struct BobView: View {
     
     @State private var update = false
     
-    init(bob: Bob) {
+    init(bob: Bob, bobs: [Bob]) {
         self.bob = bob
+        self.bobs = bobs
         self._display = State(initialValue: ListType.init(rawValue: Int(bob.displayType)) ?? .smallList)
         self._group = State(initialValue: Int(bob.group))
         self._sort = State(initialValue: Int(bob.sort))
@@ -402,10 +406,10 @@ struct BobView: View {
             }
         }
         .sheet(isPresented: self.$newBit) {
-            BitEditor(bob: bob)
+            BitEditor(bob: bob, bits: bob.bitArray)
         }
         .sheet(isPresented: self.$editBob) {
-            BobEditor(bob: bob)
+            BobEditor(bob: bob, bobs: bobs, dismissNavigation: dismiss)
         }
         .sheet(isPresented: self.$editBits, onDismiss: { setGroupAndSort(); update.toggle() }) {
             BitListEditor(bob: bob)
@@ -519,7 +523,7 @@ struct BobView: View {
             let attribute = getGroup(self.group)
             for bit in filteredBits {
                 autoreleasepool {
-                    if bit.allAttributeValues(attribute).contains(group) || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "Unassigned") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
+                    if bit.allAttributeValues(attribute).contains(group) || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "None") || ((bit.attributes![attribute] == nil || bit.attributes![attribute] == "") && group == "False" && getGroupAttribute(self.group)?.type == 2) {
                         bitArray += [bit]
                     }
                 }
@@ -593,7 +597,7 @@ struct BobView: View {
             presets = presets.filter { !$0.isEmpty }
             // Group by preset order
             if unassigned {
-                presets += ["Unassigned"]
+                presets += ["None"]
             }
             return presets
         }
@@ -614,7 +618,7 @@ struct BobView: View {
                 }
             }
             if unassigned {
-                values += ["Unassigned"]
+                values += ["None"]
             }
             return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
         }

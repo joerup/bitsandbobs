@@ -53,7 +53,7 @@ struct BobList: View {
                             
                             ForEach(self.bobs, id: \.objectID) { bob in
                                 
-                                NavigationLink(destination: BobView(bob: bob)) {
+                                NavigationLink(destination: BobView(bob: bob, bobs: bobs.map{$0})) {
                                     
                                     ZStack {
                                         if bob.image == nil {
@@ -143,7 +143,7 @@ struct BobList: View {
                     PremiumView()
                 }
                 .sheet(isPresented: self.$newBob) {
-                    BobEditor()
+                    BobEditor(bobs: bobs.map{$0})
                 }
                 
                 Text("Select a collection")
