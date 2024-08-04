@@ -103,6 +103,7 @@ struct AttrEditor: View {
                 }
             }
             self.presets.removeAll(where: { $0 == "" })
+            self.presets += [""]
         }
         
         self.hasChanges = false
@@ -237,11 +238,6 @@ struct AttrEditor: View {
                         }
                         .onMove(perform: moveAttributePresets)
                         .onDelete(perform: removeAttributePresets)
-                    }
-                    .onAppear {
-                        if presets.last != "" {
-                            self.presets += [""]
-                        }
                     }
                     .onChange(of: presets) { presets in
                         hasChanges = true
