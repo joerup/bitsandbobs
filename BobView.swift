@@ -208,7 +208,7 @@ struct BobView: View {
                                                     .fixedSize(horizontal: false, vertical: true)
                                                     .padding(10)
                                                     .padding(.horizontal, 5)
-                                                    .frame(minWidth: 40, minHeight: 40)
+                                                    .frame(minHeight: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(tags.contains(tag) ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
@@ -235,7 +235,7 @@ struct BobView: View {
                                                     .fixedSize(horizontal: false, vertical: true)
                                                     .padding(10)
                                                     .padding(.horizontal, 5)
-                                                    .frame(minWidth: 40, minHeight: 40)
+                                                    .frame(minHeight: 40)
                                                     .background(RoundedRectangle(cornerRadius: 15).fill(filterActive ? PersistenceController.themeColor : Color(uiColor: .systemGray6)))
                                             }
                                         }
