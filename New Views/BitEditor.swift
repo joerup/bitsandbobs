@@ -183,6 +183,7 @@ struct BitEditor: View {
                                             .font(.system(.headline, design: .rounded).weight(.semibold))
                                         }
                                     }
+                                
                             }
                             .padding(10)
                             .padding(.horizontal, 5)

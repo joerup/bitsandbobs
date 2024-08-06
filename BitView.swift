@@ -45,7 +45,7 @@ struct BitView: View {
                                     .padding(10)
                             }
                             else {
-                                Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2)
+                                Rectangle().fill(Color(UIColor.systemGray6))
                                     .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
                                     .cornerRadius(20)
                                     .padding(10)
@@ -58,7 +58,6 @@ struct BitView: View {
                             Spacer()
                             
                             Icon(image: uiImage, size: UIScreen.main.bounds.height*0.35, faded: bob.listType == 1 && !bit.checked)
-                                .shadow(color: .black.opacity(0.5), radius: 20)
                                 .overlay {
                                     if uiImage == nil {
                                         Text(String(bit.name?.first ?? " "))
@@ -74,19 +73,17 @@ struct BitView: View {
                                             .lineLimit(0)
                                             .tracking(-0.5)
                                             .monospacedDigit()
-                                            .foregroundColor(Color(UIColor.label))
-                                            .padding(.horizontal, 5)
+                                            .foregroundColor(Color(UIColor.systemGray))
+                                            .padding(8)
                                             .minimumScaleFactor(0.05)
                                             .frame(width: 64, height: 64)
-                                            .background(Circle().fill(Color(UIColor.systemBackground)))
+                                            .background(Circle().fill(Color(UIColor.systemGray6)))
                                             .overlay(RoundedRectangle(cornerRadius: 64).stroke(Color(uiColor: .systemGray5), lineWidth: 64/15))
-                                            .shadow(color: .black.opacity(0.5), radius: 20)
                                     }
                                 }
                                 .overlay(alignment: .bottomTrailing) {
                                     if bob.listType == 1 {
                                         Check(bob: bob, bit: bit, update: $update, scaleFactor: 2)
-                                            .shadow(color: .black.opacity(0.5), radius: 20)
                                     }
                                 }
                             

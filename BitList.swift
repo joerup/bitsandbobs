@@ -233,13 +233,12 @@ struct BitList: View {
                             .lineLimit(0)
                             .monospacedDigit()
                             .tracking(-0.5)
-                            .foregroundColor(Color(UIColor.label))
-                            .padding(.horizontal, 5*size/80)
+                            .foregroundColor(Color(UIColor.secondaryLabel))
+                            .padding(5*size/80)
                             .minimumScaleFactor(0.05)
                             .frame(width: 32*size/80, height: 32*size/80)
-                            .background(Circle().fill(Color(UIColor.systemBackground)))
+                            .background(Circle().fill(Color(UIColor.systemGray6)))
                             .overlay(RoundedRectangle(cornerRadius: 32*size/80).stroke(Color(uiColor: .systemGray5), lineWidth: 32*size/80/15))
-                            .shadow(color: .black.opacity(0.5), radius: 20)
                     }
                 }
                 .overlay(alignment: .bottomTrailing) {
