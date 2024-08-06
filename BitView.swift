@@ -33,24 +33,10 @@ struct BitView: View {
                     
                     ZStack {
                         
-                        Group {
-                            if let imageData = bob.image, let image = UIImage(data: imageData) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .blur(radius: 7)
-                                    .opacity(0.2)
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(20)
-                                    .padding(10)
-                            }
-                            else {
-                                Rectangle().fill(Color(UIColor.systemGray6))
-                                    .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
-                                    .cornerRadius(20)
-                                    .padding(10)
-                            }
-                        }
+                        Rectangle().fill(Color(UIColor.systemGray6))
+                            .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.5)
+                            .cornerRadius(20)
+                            .padding(10)
                         
                         VStack {
                             let uiImage = bit.image != nil ? UIImage(data: bit.image!) : nil
