@@ -43,6 +43,7 @@ struct AttrEditor: View {
     @State private var editPresets = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
+    @FocusState private var nameFocus: Bool
     
     @State private var deleteAttribute = false
     
@@ -109,9 +110,13 @@ struct AttrEditor: View {
                         Spacer()
                         if create {
                             TextField("Name", text: self.$name)
+                                .focused($nameFocus)
                                 .multilineTextAlignment(.trailing)
                                 .onChange(of: name) { _ in
                                     hasChanges = true
+                                }
+                                .onAppear {
+                                    nameFocus = true
                                 }
                         }
                         else {
@@ -186,14 +191,6 @@ struct AttrEditor: View {
                 
                 if self.type == 0 {
                     Section {
-                        
-                        Toggle(isOn: self.$groupable) {
-                            Text("Grouping")
-                        }
-                        .onChange(of: groupable) { _ in
-                            hasChanges = true
-                        }
-                        
                         if !self.allowMultiple {
                             Toggle(isOn: self.$sortable) {
                                 Text("Sorting")
@@ -201,6 +198,13 @@ struct AttrEditor: View {
                             .onChange(of: sortable) { _ in
                                 hasChanges = true
                             }
+                        }
+                        
+                        Toggle(isOn: self.$groupable) {
+                            Text("Grouping")
+                        }
+                        .onChange(of: groupable) { _ in
+                            hasChanges = true
                         }
                         
                         Toggle(isOn: self.$taggable) {
@@ -301,17 +305,6 @@ struct AttrEditor: View {
                     
                     Section {
                         
-                        if !self.decimal {
-                            
-                            Toggle(isOn: self.$groupable) {
-                                Text("Grouping")
-                            }
-                            .onChange(of: groupable) { _ in
-                                hasChanges = true
-                            }
-                            
-                        }
-                        
                         Toggle(isOn: self.$sortable) {
                             Text("Sorting")
                         }
@@ -320,6 +313,13 @@ struct AttrEditor: View {
                         }
                         
                         if !self.decimal {
+                            
+                            Toggle(isOn: self.$groupable) {
+                                Text("Grouping")
+                            }
+                            .onChange(of: groupable) { _ in
+                                hasChanges = true
+                            }
                             
                             Toggle(isOn: self.$taggable) {
                                 Text("Filtering")
