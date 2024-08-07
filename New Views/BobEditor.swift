@@ -29,7 +29,6 @@ struct BobEditor: View {
     
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
-    @FocusState private var nameFocus: Bool
     
     @State private var deleteBob = false
     @State private var deleteBob2 = false
@@ -87,15 +86,9 @@ struct BobEditor: View {
                         Text("Name")
                         Spacer()
                         TextField("Name", text: self.$name)
-                            .focused($nameFocus)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: name) { _ in
                                 hasChanges = true
-                            }
-                            .onAppear {
-                                if create {
-                                    nameFocus = true
-                                }
                             }
                     }
                     AStack {

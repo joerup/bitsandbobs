@@ -29,7 +29,6 @@ struct BitEditor: View {
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
     @State private var editTags = false
-    @FocusState private var nameFocus: Bool
     @FocusState private var tagFocus: Bool
     
     @State private var hasChanges = false
@@ -88,15 +87,9 @@ struct BitEditor: View {
                         Text("Name")
                         Spacer()
                         TextField("Name", text: self.$name)
-                            .focused($nameFocus)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: name) { _ in
                                 hasChanges = true
-                            }
-                            .onAppear {
-                                if create {
-                                    nameFocus = true
-                                }
                             }
                     }
                     AStack {

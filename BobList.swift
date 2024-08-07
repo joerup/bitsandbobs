@@ -59,7 +59,9 @@ struct BobList: View {
                                         if bob.image == nil {
                                             Rectangle()
                                                 .fill(Color.init(red: 0.9, green: 0.7, blue: 0.4, opacity: 0.2))
+                                                .frame(width: max(geometry.size.width-20, 1), height: UIScreen.main.bounds.height*0.15)
                                                 .cornerRadius(20)
+                                                .padding(.horizontal, 10)
                                         }
                                         
                                         Image(uiImage: bob.image != nil ? UIImage(data: bob.image!) ?? UIImage(named: "") ?? UIImage() : UIImage(named: "") ?? UIImage())
@@ -68,13 +70,15 @@ struct BobList: View {
                                             .blur(radius: 1)
                                             .frame(height: UIScreen.main.bounds.height*0.15)
                                             .cornerRadius(20)
+                                            .padding(.horizontal, 10)
                                         
                                         VStack {
                                             Text(bob.name ?? "")
                                                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                                 .tracking(-0.5)
-                                                .lineLimit(0)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.center)
                                                 .minimumScaleFactor(0.2)
                                                 .foregroundColor(bob.image != nil ? Color(UIColor.white) : Color(UIColor.label))
                                                 .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
@@ -91,7 +95,7 @@ struct BobList: View {
                                             }
                                         }
                                         .frame(height: UIScreen.main.bounds.height*0.15)
-                                        .padding(.horizontal)
+                                        .padding(.horizontal, 30)
                                     }
                                 }
                             }

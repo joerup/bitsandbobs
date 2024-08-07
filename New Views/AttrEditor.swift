@@ -43,7 +43,6 @@ struct AttrEditor: View {
     @State private var editPresets = false
     @State private var createEmptyWarning = false
     @State private var cancelAlert = false
-    @FocusState private var nameFocus: Bool
     
     @State private var deleteAttribute = false
     
@@ -110,13 +109,9 @@ struct AttrEditor: View {
                         Spacer()
                         if create {
                             TextField("Name", text: self.$name)
-                                .focused($nameFocus)
                                 .multilineTextAlignment(.trailing)
                                 .onChange(of: name) { _ in
                                     hasChanges = true
-                                }
-                                .onAppear {
-                                    nameFocus = true
                                 }
                         }
                         else {

@@ -81,7 +81,8 @@ struct BobView: View {
                                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                                 .tracking(-0.5)
-                                .lineLimit(0)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
                                 .minimumScaleFactor(0.2)
                                 .foregroundColor(bob.image != nil ? Color(UIColor.white) : Color(UIColor.label))
                                 .shadow(color: .black, radius: bob.image != nil ? 10 : 0)
@@ -98,7 +99,8 @@ struct BobView: View {
                             }
                         }
                         .frame(height: UIScreen.main.bounds.height*0.15)
-                        .padding(.horizontal)
+                        .padding(.horizontal, 30)
+                        
                     }
                     
                     if showSearch {
