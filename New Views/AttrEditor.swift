@@ -300,11 +300,13 @@ struct AttrEditor: View {
                     
                     Section {
                         
-                        Toggle(isOn: self.$sortable) {
-                            Text("Sorting")
-                        }
-                        .onChange(of: sortable) { _ in
-                            hasChanges = true
+                        if !self.allowMultiple {
+                            Toggle(isOn: self.$sortable) {
+                                Text("Sorting")
+                            }
+                            .onChange(of: sortable) { _ in
+                                hasChanges = true
+                            }
                         }
                         
                         if !self.decimal {
