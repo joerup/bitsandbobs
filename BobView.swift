@@ -157,7 +157,7 @@ struct BobView: View {
                                     .padding(.horizontal, 10)
                                     .padding(5)
                             }
-                            HStack(spacing: 25) {
+                            HStack(spacing: 20) {
                                 if bob.listType == 1 {
                                     HStack(spacing: 5) {
                                         Button {
@@ -216,13 +216,6 @@ struct BobView: View {
                                 }
                                 ForEach(filterableAttributes, id: \.name) { attribute in
                                     HStack(spacing: 5) {
-                                        if attribute.type != 2 {
-                                            Text(attribute.displayName ?? "")
-                                                .textCase(.uppercase)
-                                                .font(.system(.caption, design: .rounded, weight: .semibold))
-                                                .foregroundStyle(.gray)
-                                                .padding(.trailing, 5)
-                                        }
                                         
                                         let values = getAllAttributeValues(for: attribute, among: bob.bitArray, forFilter: true)
                                         ForEach(values, id: \.self) { value in
@@ -610,7 +603,7 @@ struct BobView: View {
             // Remove empty presets
             presets = presets.filter { !$0.isEmpty }
             // Group by preset order
-            if unassigned {
+            if unassigned && !forFilter {
                 presets += ["None"]
             }
             return presets
@@ -631,7 +624,7 @@ struct BobView: View {
                     }
                 }
             }
-            if unassigned {
+            if unassigned && !forFilter {
                 values += ["None"]
             }
             return values.sorted { Double($0) ?? .infinity < Double($1) ?? .infinity }
