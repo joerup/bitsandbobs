@@ -20,8 +20,13 @@ extension Bit {
     
     @NSManaged public var name: String?
     @NSManaged public var desc: String?
+    
     @NSManaged public var image: Data?
     @NSManaged public var icon: Data?
+    @NSManaged public var imageOffsetX: Double
+    @NSManaged public var imageOffsetY: Double
+    @NSManaged public var imageScale: Double
+    
     @NSManaged public var paragraph: String?
     @NSManaged public var tags: [String]?
     @NSManaged public var attributes: [String:String]?
@@ -31,6 +36,10 @@ extension Bit {
     
     func allAttributeValues(_ name: String?) -> [String] {
         return (attributes?[name ?? ""] ?? "")?.components(separatedBy: CharacterSet(charactersIn: String(Constants.delimiter))) ?? []
+    }
+    
+    public var imageOffset: CGSize {
+        return CGSize(width: imageOffsetX, height: imageOffsetY)
     }
 }
 

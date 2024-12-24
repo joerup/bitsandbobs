@@ -18,6 +18,8 @@ struct BitEditor: View {
     @State var desc = ""
     @State var paragraph = ""
     @State var image = UIImage()
+    @State var imageOffset: CGSize = .zero
+    @State var imageScale: CGFloat = 1.0
     @State var tags: [String] = []
     @State var attributes: [String:String] = [:]
     @State var checked = false
@@ -50,6 +52,8 @@ struct BitEditor: View {
             self._desc = State(initialValue: bit.desc ?? "")
             self._paragraph = State(initialValue: bit.paragraph ?? "")
             self._image = State(initialValue: bit.image != nil ? UIImage(data: bit.image!)! : UIImage())
+            self._imageOffset = State(initialValue: bit.imageOffset)
+            self._imageScale = State(initialValue: bit.imageScale)
             self._tags = State(initialValue: bit.tags ?? [])
             self._attributes = State(initialValue: bit.attributes ?? [:])
             self._checked = State(initialValue: bit.checked)
@@ -67,9 +71,9 @@ struct BitEditor: View {
                 
                 Section(header: HStack {
                     Spacer()
-                    ImageEditor(image: self.$image) {
+                    ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale, selectorShape: Circle()) {
                         ZStack {
-                            Icon(image: self.image, size: 100, faded: true)
+                            Icon(image: self.image, offset: self.imageOffset, scale: self.imageScale, size: 100, faded: true)
                             Image(systemName: "photo")
                                 .foregroundColor(Color(UIColor.systemGray))
                                 .font(.largeTitle)
@@ -354,6 +358,9 @@ struct BitEditor: View {
             bit.paragraph = self.paragraph
             bit.image = self.image.jpegData(compressionQuality: 0.75)
             bit.icon = bit.image?.compressed()
+            bit.imageOffsetX = self.imageOffset.width
+            bit.imageOffsetY = self.imageOffset.height
+            bit.imageScale = self.imageScale
             bit.bob = self.bob
             bit.tags = self.tags
             bit.attributes = self.attributes
@@ -369,6 +376,9 @@ struct BitEditor: View {
                 bit!.paragraph = self.paragraph
                 bit!.image = self.image.jpegData(compressionQuality: 0.75)
                 bit!.icon = bit!.image?.compressed()
+                bit!.imageOffsetX = self.imageOffset.width
+                bit!.imageOffsetY = self.imageOffset.height
+                bit!.imageScale = self.imageScale
                 bit!.tags = self.tags
                 bit!.attributes = self.attributes
                 bit!.checked = self.checked

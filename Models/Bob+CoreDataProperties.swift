@@ -20,7 +20,11 @@ extension Bob {
     
     @NSManaged public var name: String?
     @NSManaged public var desc: String?
+    
     @NSManaged public var image: Data?
+    @NSManaged public var imageOffsetX: Double
+    @NSManaged public var imageOffsetY: Double
+    @NSManaged public var imageScale: Double
     
     @NSManaged public var listType: Int16
     @NSManaged public var displayType: Int16

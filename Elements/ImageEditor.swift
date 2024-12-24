@@ -10,11 +10,17 @@ import SwiftUI
 import UIKit
 import PhotosUI
 
-struct ImageEditor<Content: View>: View {
+struct ImageEditor<Content: View, SelectorShape: Shape>: View {
     
     @Binding var image: UIImage
+    @Binding var offset: CGSize
+    @Binding var scale: CGFloat
+    
+    var selectorShape: SelectorShape
+    var aspectRatio: CGFloat = 1.0
     
     @State private var photoItem: PhotosPickerItem?
+    @State private var imageItem: ImageItem?
     
     @State private var displayMenu = false
     
@@ -31,14 +37,19 @@ struct ImageEditor<Content: View>: View {
         }
         .confirmationDialog("Choose a new photo", isPresented: $displayMenu) {
             Button {
-                self.displayCamera = true
+                self.displayCamera.toggle()
             } label: {
                 Text("Camera").textCase(nil)
             }
             Button {
-                self.displayLibrary = true
+                self.displayLibrary.toggle()
             } label: {
                 Text("Photo Library").textCase(nil)
+            }
+            Button {
+                self.imageItem = ImageItem(image: image)
+            } label: {
+                Text("Reposition").textCase(nil)
             }
             Button {
                 self.image = UIImage()
@@ -49,19 +60,41 @@ struct ImageEditor<Content: View>: View {
             Text("Choose a new photo").textCase(nil)
         }
         .sheet(isPresented: $displayCamera) {
-            ImagePicker(sourceType: .camera, selectedImage: self.$image)
+            ImagePicker(sourceType: .camera) { image in
+                imageItem = ImageItem(image: image)
+            }
         }
         .photosPicker(isPresented: $displayLibrary, selection: self.$photoItem)
         .onChange(of: photoItem) { _ in
             Task {
                 if let data = try? await photoItem?.loadTransferable(type: Data.self) {
-                    if let uiImage = UIImage(data: data) {
-                        self.image = uiImage
-                        return
+                    if let image = UIImage(data: data) {
+                        imageItem = ImageItem(image: image)
                     }
                 }
-                print("Failed")
             }
         }
+        .sheet(item: $imageItem) { imageItem in
+            ImageTransformer(
+                image: imageItem.image,
+                initialOffset: offset,
+                initialScale: scale,
+                selectorShape: selectorShape,
+                aspectRatio: aspectRatio,
+                onConfirm: { offset, scale in
+                    self.image = imageItem.image
+                    self.offset = offset
+                    self.scale = scale
+                    self.imageItem = nil
+                }, onCancel: {
+                    self.imageItem = nil
+                }
+            )
+        }
     }
+}
+ 
+struct ImageItem: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }

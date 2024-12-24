@@ -15,6 +15,8 @@ struct BobEditor: View {
     @State var name = ""
     @State var desc = ""
     @State var image = UIImage()
+    @State var imageOffset: CGSize = .zero
+    @State var imageScale: CGFloat = 1.0
     @State var attributes: [Attribute] = []
     @State var listType: Int = 0
     
@@ -50,6 +52,8 @@ struct BobEditor: View {
             self._name = State(initialValue: bob.name ?? "")
             self._desc = State(initialValue: bob.desc ?? "")
             self._image = State(initialValue: bob.image != nil ? UIImage(data: bob.image!)! : UIImage())
+            self._imageOffset = State(initialValue: CGSize(width: bob.imageOffsetX, height: bob.imageOffsetY))
+            self._imageScale = State(initialValue: bob.imageScale)
             self._attributes = State(initialValue: bob.attributeList)
             self._nextAttrID = State(initialValue: bob.nextAttrID)
             self._listType = State(initialValue: Int(bob.listType))
@@ -65,9 +69,9 @@ struct BobEditor: View {
                 Section(header:
                     HStack {
                         Spacer()
-                        ImageEditor(image: self.$image) {
+                        ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale, selectorShape: RoundedRectangle(cornerRadius: 20), aspectRatio: 2.5) {
                             ZStack {
-                                Icon(image: self.image, size: 100, rectangle: true, faded: true)
+                                Icon(image: image, size: 100, rectangle: true, faded: true)
                                 Image(systemName: "photo")
                                     .foregroundColor(Color(UIColor.systemGray))
                                     .font(.largeTitle)
@@ -309,6 +313,9 @@ struct BobEditor: View {
             bob.name = self.name
             bob.desc = self.desc
             bob.image = self.image.jpegData(compressionQuality: 0.75)
+            bob.imageOffsetX = self.imageOffset.width
+            bob.imageOffsetY = self.imageOffset.height
+            bob.imageScale = self.imageScale
             bob.attributes = NSSet(array: self.attributes)
             bob.nextAttrID = self.nextAttrID
             bob.listType = Int16(self.listType)
@@ -320,6 +327,9 @@ struct BobEditor: View {
                 bob!.name = self.name
                 bob!.desc = self.desc
                 bob!.image = self.image.jpegData(compressionQuality: 0.75)
+                bob!.imageOffsetX = self.imageOffset.width
+                bob!.imageOffsetY = self.imageOffset.height
+                bob!.imageScale = self.imageScale
                 bob!.attributes = NSSet(array: self.attributes)
                 bob!.nextAttrID = self.nextAttrID
                 bob!.listType = Int16(self.listType)

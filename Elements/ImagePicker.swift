@@ -13,7 +13,7 @@ struct ImagePicker: UIViewControllerRepresentable {
  
     var sourceType: UIImagePickerController.SourceType
     
-    @Binding var selectedImage: UIImage
+    var onSelect: (UIImage) -> Void
     @Environment(\.dismiss) private var dismiss
  
     func makeUIViewController(context: UIViewControllerRepresentableContext<ImagePicker>) -> UIImagePickerController {
@@ -44,7 +44,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
      
             if let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
-                parent.selectedImage = image
+                parent.onSelect(image)
             }
      
             parent.dismiss()

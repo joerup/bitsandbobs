@@ -43,7 +43,7 @@ struct BitView: View {
                                 
                             Spacer()
                             
-                            Icon(image: uiImage, size: UIScreen.main.bounds.height*0.35, faded: bob.listType == 1 && !bit.checked)
+                            Icon(image: uiImage, offset: bit.imageOffset, scale: bit.imageScale, size: UIScreen.main.bounds.height*0.35, faded: bob.listType == 1 && !bit.checked)
                                 .overlay {
                                     if uiImage == nil {
                                         Text(String(bit.name?.first ?? " "))
