@@ -111,7 +111,10 @@ struct BobView: View {
                                 .aspectRatio(1.0, contentMode: .fill)
                             TextField("Search", text: self.$search, onCommit: {
                                 if search == "" {
-                                    self.showSearch = false
+                                    withAnimation {
+                                        self.showSearch = false
+                                        setGroupAndSort()
+                                    }
                                 }
                             })
                             .disableAutocorrection(true)
@@ -127,8 +130,10 @@ struct BobView: View {
                             Spacer()
                             Button {
                                 self.search = ""
-                                self.showSearch = false
-                                setGroupAndSort()
+                                withAnimation {
+                                    self.showSearch = false
+                                    setGroupAndSort()
+                                }
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(Color(UIColor.systemGray))
