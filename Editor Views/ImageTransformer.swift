@@ -94,19 +94,19 @@ struct ImageTransformer<SelectorShape: Shape>: View {
                 self.lastScale = currentScale
             }
             .clipped()
-            .navigationBarTitle("Adjust", displayMode: .inline)
             .navigationBarItems(
-                leading: Button("Cancel") {
+                leading: Button {
                     onCancel()
+                } label: {
+                    Text("Cancel")
                 },
                 trailing: Button {
                     onConfirm(dragOffset / image.size.minimum, currentScale)
                 } label: {
                     Text("Apply")
-                        .fontWeight(.bold)
+                        .fontWeight(.semibold)
                 }
             )
-            .textCase(nil)
         }
     }
     

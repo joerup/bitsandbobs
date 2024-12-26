@@ -131,7 +131,7 @@ struct BitList: View {
     
     @ViewBuilder
     private func list(name: String, bits: [Bit], size: CGSize) -> some View {
-        LazyVStack(spacing: 3) {
+        VStack(spacing: 3) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitRow(bit: bit)
@@ -147,7 +147,7 @@ struct BitList: View {
     @ViewBuilder
     private func grid(name: String, bits: [Bit], size: CGSize) -> some View {
         let count = (size.width-50) / (display == .smallGrid ? (mediumIconSize+4) : (largeIconSize+5))
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: Int(count))) {
+        VGrid(columns: Array(repeating: GridItem(.flexible()), count: Int(count))) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitGridItem(bit: bit, size: count/floor(count) * (display == .smallGrid ? mediumIconSize : largeIconSize))

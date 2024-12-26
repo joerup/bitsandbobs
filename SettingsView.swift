@@ -104,7 +104,7 @@ struct SettingsView: View {
                             dismiss()
                         }) {
                             Text("Done")
-                                .font(.system(.headline, design: .rounded).bold())
+                                .font(.system(.headline).bold())
                                 .foregroundColor(PersistenceController.themeColor)
                         }
                     }

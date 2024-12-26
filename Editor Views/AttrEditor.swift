@@ -30,7 +30,8 @@ struct AttrEditor: View {
     @State var taggable: Bool = false
     
     // Text
-    @State var presets: [String] = [""]
+    @State var presets: [String] = []
+    @FocusState var selectedPreset: Int?
     
     // Numbers
     @State var decimal: Bool = false
@@ -124,7 +125,7 @@ struct AttrEditor: View {
                     }
                     
                     AStack {
-                        Text("Data Type")
+                        Text("Value Type")
                         Spacer()
                         Menu {
                             Picker("", selection: $type) {
@@ -233,9 +234,22 @@ struct AttrEditor: View {
                                 get: { self.presets[p] },
                                 set: { self.presets[p] = $0; hasChanges = true }))
                             .foregroundColor(Color(UIColor.label))
+                            .focused($selectedPreset, equals: p)
                         }
                         .onMove(perform: moveAttributePresets)
                         .onDelete(perform: removeAttributePresets)
+                        
+                        Button {
+                            self.presets += [""]
+                            self.selectedPreset = presets.count - 1
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "plus")
+                                    .font(.callout.weight(.semibold))
+                                Spacer()
+                            }
+                        }
                     }
                     .onAppear {
                         if let bob, let attribute {
@@ -248,15 +262,6 @@ struct AttrEditor: View {
                             }
                         }
                         self.presets.removeAll(where: { $0 == "" })
-                        self.presets += [""]
-                    }
-                    .onChange(of: presets) { presets in
-                        if presets.last != "" {
-                            self.presets += [""]
-                        }
-                        while self.presets.count >= 2 && self.presets[self.presets.count-2].isEmpty && self.presets[self.presets.count-1].isEmpty {
-                            self.presets.removeLast()
-                        }
                     }
                 }
                 else if type == 1 {
@@ -401,7 +406,6 @@ struct AttrEditor: View {
                         }
                     }) {
                         Text("Cancel")
-                            .font(.system(.headline, design: .rounded))
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Attribute" : "Discard Changes", role: .destructive) {
@@ -418,7 +422,7 @@ struct AttrEditor: View {
                         saveAttribute()
                     }) {
                         Text("Save")
-                            .font(.system(.headline, design: .rounded).bold())
+                            .font(.system(.headline).bold())
                     }
                     .disabled(self.name == "" || (self.displayName == "" && !create))
                     .alert(isPresented: self.$createEmptyWarning) {
@@ -462,6 +466,8 @@ struct AttrEditor: View {
             self.createEmptyWarning.toggle()
             return
         }
+        
+        self.presets.removeAll(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty })
         
         if !(self.maxCount == "" || Double(self.maxCount) != nil) { self.maxCount = "" }
         

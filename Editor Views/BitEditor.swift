@@ -71,7 +71,7 @@ struct BitEditor: View {
                 
                 Section(header: HStack {
                     Spacer()
-                    ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale, selectorShape: Circle()) {
+                    ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale, allowRepositioning: true, selectorShape: Circle()) {
                         ZStack {
                             Icon(image: self.image, offset: self.imageOffset, scale: self.imageScale, size: 100, faded: true)
                             Image(systemName: "photo")
@@ -97,9 +97,9 @@ struct BitEditor: View {
                             }
                     }
                     AStack {
-                        Text("Description")
+                        Text("Subtitle")
                         Spacer()
-                        TextField("Description", text: self.$desc)
+                        TextField("Subtitle", text: self.$desc)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: desc) { _ in
                                 hasChanges = true
@@ -177,7 +177,7 @@ struct BitEditor: View {
                                             .font(.system(.headline, design: .rounded).weight(.semibold))
                                             .focused($tagFocus)
                                             .onAppear {
-                                                guard tags[t].isEmpty else { return }
+                                                guard t < tags.count, tags[t].isEmpty else { return }
                                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                                     tagFocus = true
                                                 }
@@ -240,8 +240,8 @@ struct BitEditor: View {
                     }
                 }
                 
-                Section(header: Text("Text").font(.callout)) {
-                    TextField("Text", text: self.$paragraph, axis: .vertical)
+                Section(header: Text("Description").font(.callout)) {
+                    TextField("Description", text: self.$paragraph, axis: .vertical)
                         .onChange(of: paragraph) { _ in
                             hasChanges = true
                         }
@@ -272,7 +272,6 @@ struct BitEditor: View {
                         }
                     }) {
                         Text("Cancel")
-                            .font(.system(.headline, design: .rounded))
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Item" : "Discard Changes", role: .destructive) {
@@ -289,7 +288,7 @@ struct BitEditor: View {
                         saveBit()
                     }) {
                         Text("Save")
-                            .font(.system(.headline, design: .rounded).bold())
+                            .font(.system(.headline).bold())
                     }
                     .disabled(self.name == "")
                     .alert(isPresented: self.$createEmptyWarning) {

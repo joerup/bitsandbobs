@@ -52,7 +52,7 @@ struct BitListEditor: View {
                         dismiss()
                     }) {
                         Text("Done")
-                            .font(.system(.headline, design: .rounded).bold())
+                            .font(.system(.headline).bold())
                     }
                 }
             }
