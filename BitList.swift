@@ -131,7 +131,7 @@ struct BitList: View {
     
     @ViewBuilder
     private func list(name: String, bits: [Bit], size: CGSize) -> some View {
-        LazyVStack(spacing: 3) {
+        VStack(spacing: 3) {
             ForEach(bits, id: \.order) { bit in
                 NavigationLink(destination: BitView(bit: bit, bob: bob)) {
                     bitRow(bit: bit)

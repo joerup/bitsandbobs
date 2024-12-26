@@ -69,7 +69,7 @@ struct BobEditor: View {
                 Section(header:
                     HStack {
                         Spacer()
-                        ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale, selectorShape: RoundedRectangle(cornerRadius: 20), aspectRatio: 2.5) {
+                        ImageEditor(image: $image, offset: $imageOffset, scale: $imageScale) {
                             ZStack {
                                 Icon(image: image, size: 100, rectangle: true, faded: true)
                                 Image(systemName: "photo")
@@ -96,9 +96,9 @@ struct BobEditor: View {
                             }
                     }
                     AStack {
-                        Text("Description")
+                        Text("Subtitle")
                         Spacer()
-                        TextField("Description", text: self.$desc)
+                        TextField("Subtitle", text: self.$desc)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: desc) { _ in
                                 hasChanges = true
@@ -109,7 +109,7 @@ struct BobEditor: View {
                         Spacer()
                         Menu {
                             Picker("", selection: $listType) {
-                                Text("Standard")
+                                Text("Basic")
                                     .tag(0)
                                 Text("Checklist")
                                     .tag(1)
@@ -118,7 +118,7 @@ struct BobEditor: View {
                             }
                         } label: {
                             HStack {
-                                Text(listType == 0 ? "Standard" : listType == 1 ? "Checklist" : "Ranking")
+                                Text(listType == 0 ? "Basic" : listType == 1 ? "Checklist" : "Ranking")
                                 Image(systemName: "chevron.up.chevron.down").imageScale(.small)
                             }
                         }
@@ -210,7 +210,6 @@ struct BobEditor: View {
                         }
                     }) {
                         Text("Cancel")
-                            .font(.system(.headline, design: .rounded))
                     }
                     .confirmationDialog("Cancel", isPresented: $cancelAlert) {
                         Button(create ? "Delete Collection" : "Discard Changes", role: .destructive) {
@@ -228,7 +227,7 @@ struct BobEditor: View {
                         saveBob()
                     }) {
                         Text("Save")
-                            .font(.system(.headline, design: .rounded).bold())
+                            .font(.system(.headline).bold())
                     }
                     .disabled(self.name == "")
                     .alert(isPresented: self.$createEmptyWarning) {

@@ -16,8 +16,9 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
     @Binding var offset: CGSize
     @Binding var scale: CGFloat
     
-    var selectorShape: SelectorShape
-    var aspectRatio: CGFloat = 1.0
+    private var allowRepositioning: Bool
+    private var selectorShape: SelectorShape
+    private var aspectRatio: CGFloat
     
     @State private var photoItem: PhotosPickerItem?
     @State private var imageItem: ImageItem?
@@ -29,35 +30,59 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
     
     var content: () -> Content
     
+    init(image: Binding<UIImage>, offset: Binding<CGSize>, scale: Binding<CGFloat>, allowRepositioning: Bool = false, selectorShape: SelectorShape = Rectangle(), aspectRatio: CGFloat = 1.0, content: @escaping () -> Content) {
+        self._image = image
+        self._offset = offset
+        self._scale = scale
+        self.allowRepositioning = allowRepositioning
+        self.selectorShape = selectorShape
+        self.aspectRatio = aspectRatio
+        self.content = content
+    }
+    
     var body: some View {
-        Button {
-            displayMenu.toggle()
-        } label: {
-            content()
+        Group {
+            if allowRepositioning && image.size != .zero {
+                Menu {
+                    Button {
+                        self.displayMenu.toggle()
+                    } label: {
+                        Label("New Photo", systemImage: "photo")
+                    }
+                    Button {
+                        self.imageItem = ImageItem(image: image)
+                    } label: {
+                        Label("Reposition", systemImage: "crop")
+                    }
+                } label: {
+                    content()
+                }
+            } else {
+                Button {
+                    self.displayMenu.toggle()
+                } label: {
+                    content()
+                }
+            }
         }
         .confirmationDialog("Choose a new photo", isPresented: $displayMenu) {
             Button {
                 self.displayCamera.toggle()
             } label: {
-                Text("Camera").textCase(nil)
+                Text("Camera")
             }
             Button {
                 self.displayLibrary.toggle()
             } label: {
-                Text("Photo Library").textCase(nil)
-            }
-            Button {
-                self.imageItem = ImageItem(image: image)
-            } label: {
-                Text("Reposition").textCase(nil)
+                Text("Photo Library")
             }
             Button {
                 self.image = UIImage()
             } label: {
-                Text("Remove Image").textCase(nil)
+                Text("No Photo")
             }
         } message: {
-            Text("Choose a new photo").textCase(nil)
+            Text("Choose a new photo")
         }
         .sheet(isPresented: $displayCamera) {
             ImagePicker(sourceType: .camera) { image in
@@ -69,7 +94,13 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
             Task {
                 if let data = try? await photoItem?.loadTransferable(type: Data.self) {
                     if let image = UIImage(data: data) {
-                        imageItem = ImageItem(image: image)
+                        if allowRepositioning {
+                            imageItem = ImageItem(image: image)
+                        } else {
+                            self.image = image
+                            self.offset = .zero
+                            self.scale = 1.0
+                        }
                     }
                 }
             }
@@ -91,6 +122,7 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
                 }
             )
         }
+        .textCase(nil)
     }
 }
  
