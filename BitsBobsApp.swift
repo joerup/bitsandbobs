@@ -34,7 +34,7 @@ struct BitsBobsApp: App {
 
     // Update existing data to new formats
     private func updateExistingData() {
-        let currentVersion = 2
+        let currentVersion = 3
         
         // Get the stored version
         let modelVersion = (UserDefaults.standard.value(forKey: "modelVersion") as? Int) ?? currentVersion
@@ -46,24 +46,32 @@ struct BitsBobsApp: App {
         let fetchRequest: NSFetchRequest<Bob> = Bob.fetchRequest()
         let bobs = (try? context.fetch(fetchRequest)) ?? []
         
-        // 1.4.0
-        if modelVersion < 1 {
-            for bob in bobs {
-                // Compress all bit images to icons
-                for bit in bob.bitArray {
-                    if let image = bit.image, bit.icon == nil {
-                        bit.icon = image.compressed()
-                    }
-                }
-            }
-            try? context.save()
-        }
-        
         // 1.4.3
         if modelVersion < 2 {
             
             // Give Premium Version for free
             UserDefaults.standard.setValue(true, forKey: "premiumActivated")
+        }
+        
+        // 1.7.0
+        if modelVersion < 3 {
+        
+            for bob in bobs {
+                bob.imageOffsetX = 0
+                bob.imageOffsetY = 0
+                bob.imageScale = 1.0
+                
+                // Compress all bit images to icons
+                for bit in bob.bitArray {
+                    if let image = bit.image {
+                        bit.imageOffsetX = 0
+                        bit.imageOffsetY = 0
+                        bit.imageScale = 1.0
+                        bit.icon = image.compressToIcon(offset: bit.imageOffset, scale: bit.imageScale)
+                    }
+                }
+            }
+            try? context.save()
         }
         
         // Save the current version

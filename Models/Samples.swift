@@ -77,7 +77,7 @@ class Samples {
             let bit = Bit(context: managedObjectContext)
             bit.name = state_names[state] ?? "none"
             bit.image = UIImage(imageLiteralResourceName: state).pngData()
-            bit.icon = bit.image?.compressed()
+            bit.icon = bit.image?.compressToIcon()
             bit.order = Int16(i)
             bit.attributes = ["Abbreviation" : state, "Year" : String(state_years[state] ?? 0), "Quarter Year" : String(state_quarters[state] ?? 0)]
             bit.checked = Bool.random()
@@ -132,7 +132,7 @@ class Samples {
             let bit = Bit(context: managedObjectContext)
             bit.name = album_names[album] ?? "none"
             bit.image = UIImage(imageLiteralResourceName: album).pngData()
-            bit.icon = bit.image?.compressed()
+            bit.icon = bit.image?.compressToIcon()
             bit.order = Int16(i)
             bit.attributes = ["Artist" : album_artists[album] ?? "none", "Genre": album_genres[album] ?? "none", "Year" : String(album_years[album] ?? 0)]
             bits1 += [bit]
@@ -157,7 +157,7 @@ class Samples {
             let bit = Bit(context: managedObjectContext)
             bit.name = "Animal \(i)"
             bit.image = UIImage(imageLiteralResourceName: "animal\(i)").pngData()
-            bit.icon = bit.image?.compressed()
+            bit.icon = bit.image?.compressToIcon()
             bit.order = Int16(i-1)
             bits2 += [bit]
         }

@@ -15,12 +15,18 @@ struct Constants {
 }
 
 extension Data {
-    func compressed() -> Data? {
-        return UIImage(data: self)?.compressedData()
+    func compressToIcon(offset: CGSize = .zero, scale: CGFloat = 1.0) -> Data? {
+        var image = UIImage(data: self)
+        image = image?.cropped(offset: offset, scale: scale)
+        image = image?.scaled(newWidth: 40)
+        return image?.jpegData(compressionQuality: 0.75)
     }
 }
 
 extension UIImage {
+    var isEmpty: Bool {
+        return self.size == CGSize.zero
+    }
     func equals(_ image: UIImage) -> Bool {
         guard let data1 = self.jpegData(compressionQuality: 0.75), let data2 = image.jpegData(compressionQuality: 0.75) else { return false }
         return data1 == data2
@@ -37,14 +43,8 @@ extension UIImage {
         }
         return nil
     }
-    func compressed() -> UIImage {
-        return scale(newWidth: 30)
-    }
-    func compressedData() -> Data? {
-        return compressed().jpegData(compressionQuality: 1)
-    }
-    func scale(newWidth: CGFloat) -> UIImage {
-        guard self.size.width != newWidth else { return self }
+    func scaled(newWidth: CGFloat) -> UIImage? {
+        guard self.size.width != newWidth else { return nil }
         
         let scaleFactor = newWidth / self.size.width
         
@@ -56,11 +56,29 @@ extension UIImage {
         
         let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return newImage ?? self
+        return newImage
     }
-    
-    var isEmpty: Bool {
-        return self.size == CGSize.zero
+    func cropped(offset: CGSize, scale: CGFloat) -> UIImage? {
+        let normalizedImage: UIImage = {
+            guard self.imageOrientation != .up else { return self }
+            UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale)
+            self.draw(in: CGRect(origin: .zero, size: self.size))
+            let renderedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            return renderedImage ?? self
+        }()
+
+        let imageSize = normalizedImage.size
+        let size = imageSize.minimum / scale
+        let x = imageSize.width / 2 - imageSize.minimum * offset.width - size / 2
+        let y = imageSize.height / 2 - imageSize.minimum * offset.height - size / 2
+        let cropRect = CGRect(x: x, y: y, width: size, height: size)
+
+        guard let cgImage = normalizedImage.cgImage?.cropping(to: cropRect) else {
+            return nil
+        }
+
+        return UIImage(cgImage: cgImage, scale: self.scale, orientation: .up)
     }
 }
 

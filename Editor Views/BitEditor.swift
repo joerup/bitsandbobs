@@ -356,7 +356,7 @@ struct BitEditor: View {
             bit.desc = self.desc
             bit.paragraph = self.paragraph
             bit.image = self.image.jpegData(compressionQuality: 0.75)
-            bit.icon = bit.image?.compressed()
+            bit.icon = bit.image?.compressToIcon(offset: imageOffset, scale: imageScale)
             bit.imageOffsetX = self.imageOffset.width
             bit.imageOffsetY = self.imageOffset.height
             bit.imageScale = self.imageScale
@@ -374,7 +374,7 @@ struct BitEditor: View {
                 bit!.desc = self.desc
                 bit!.paragraph = self.paragraph
                 bit!.image = self.image.jpegData(compressionQuality: 0.75)
-                bit!.icon = bit!.image?.compressed()
+                bit!.icon = bit!.image?.compressToIcon(offset: imageOffset, scale: imageScale)
                 bit!.imageOffsetX = self.imageOffset.width
                 bit!.imageOffsetY = self.imageOffset.height
                 bit!.imageScale = self.imageScale

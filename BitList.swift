@@ -266,8 +266,6 @@ struct BitList: View {
             if let icon = bit.icon, let image = UIImage(data: icon) {
                 Icon(
                     image: image,
-                    offset: bit.imageOffset,
-                    scale: bit.imageScale,
                     size: size,
                     faded: bob.listType == 1 && !bit.checked
                 )

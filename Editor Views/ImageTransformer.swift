@@ -115,7 +115,7 @@ struct ImageTransformer<SelectorShape: Shape>: View {
         
         // Define minimum and maximum scale factors
         let minScale: CGFloat = 1.0
-        let maxScale: CGFloat = 2.0
+        let maxScale: CGFloat = 3.0
         
         // Clamp the currentScale within the defined range
         if currentScale < minScale {

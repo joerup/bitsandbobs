@@ -42,7 +42,7 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
     
     var body: some View {
         Group {
-            if allowRepositioning && image.size != .zero {
+            if allowRepositioning && !image.isEmpty {
                 Menu {
                     Button {
                         self.displayMenu.toggle()
@@ -50,7 +50,7 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
                         Label("New Photo", systemImage: "photo")
                     }
                     Button {
-                        self.imageItem = ImageItem(image: image)
+                        self.imageItem = ImageItem(image: image, offset: offset, scale: scale)
                     } label: {
                         Label("Reposition", systemImage: "crop")
                     }
@@ -86,7 +86,7 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
         }
         .sheet(isPresented: $displayCamera) {
             ImagePicker(sourceType: .camera) { image in
-                imageItem = ImageItem(image: image)
+                selectImage(image)
             }
         }
         .photosPicker(isPresented: $displayLibrary, selection: self.$photoItem)
@@ -94,13 +94,7 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
             Task {
                 if let data = try? await photoItem?.loadTransferable(type: Data.self) {
                     if let image = UIImage(data: data) {
-                        if allowRepositioning {
-                            imageItem = ImageItem(image: image)
-                        } else {
-                            self.image = image
-                            self.offset = .zero
-                            self.scale = 1.0
-                        }
+                        selectImage(image)
                     }
                 }
             }
@@ -108,8 +102,8 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
         .sheet(item: $imageItem) { imageItem in
             ImageTransformer(
                 image: imageItem.image,
-                initialOffset: offset,
-                initialScale: scale,
+                initialOffset: imageItem.offset,
+                initialScale: imageItem.scale,
                 selectorShape: selectorShape,
                 aspectRatio: aspectRatio,
                 onConfirm: { offset, scale in
@@ -124,9 +118,19 @@ struct ImageEditor<Content: View, SelectorShape: Shape>: View {
         }
         .textCase(nil)
     }
+    
+    private func selectImage(_ image: UIImage) {
+        if allowRepositioning {
+            self.imageItem = ImageItem(image: image, offset: .zero, scale: 1.0)
+        } else {
+            self.image = image
+        }
+    }
 }
  
 struct ImageItem: Identifiable {
     let id = UUID()
     let image: UIImage
+    let offset: CGSize
+    let scale: CGFloat
 }
