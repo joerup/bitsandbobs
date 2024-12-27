@@ -18,7 +18,7 @@ extension Data {
     func compressToIcon(offset: CGSize = .zero, scale: CGFloat = 1.0) -> Data? {
         var image = UIImage(data: self)
         image = image?.cropped(offset: offset, scale: scale)
-        image = image?.scaled(newWidth: 40)
+        image = image?.scaled(newWidth: 50)
         return image?.jpegData(compressionQuality: 0.75)
     }
 }

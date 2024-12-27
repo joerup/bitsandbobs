@@ -269,7 +269,18 @@ struct BitList: View {
                     size: size,
                     faded: bob.listType == 1 && !bit.checked
                 )
-            } else {
+            }
+            else if let image = bit.image, !image.isEmpty {
+                Icon(
+                    image: nil,
+                    size: size,
+                    faded: bob.listType == 1 && !bit.checked
+                )
+                .overlay {
+                    ProgressView()
+                }
+            }
+            else {
                 Icon(
                     image: nil,
                     size: size,
