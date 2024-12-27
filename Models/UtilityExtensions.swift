@@ -61,11 +61,12 @@ extension UIImage {
     func cropped(offset: CGSize, scale: CGFloat) -> UIImage? {
         let normalizedImage: UIImage = {
             guard self.imageOrientation != .up else { return self }
-            UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale)
-            self.draw(in: CGRect(origin: .zero, size: self.size))
-            let renderedImage = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
-            return renderedImage ?? self
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1.0
+            let renderer = UIGraphicsImageRenderer(size: self.size, format: format)
+            return renderer.image { _ in
+                self.draw(in: CGRect(origin: .zero, size: self.size))
+            }
         }()
 
         let imageSize = normalizedImage.size
