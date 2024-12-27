@@ -28,7 +28,7 @@ struct Icon: View {
                     .aspectRatio(contentMode: .fill)
                     .opacity(!faded ? 1 : 0.5)
                     .offset(x: offset.width * size, y: offset.height * size)
-                    .scaleEffect(scale)
+                    .scaleEffect(scale == 0 ? 1.0 : scale)
             }
         }
         .frame(width: (!rectangle ? 1 : 2.5) * self.size, height: self.size)
