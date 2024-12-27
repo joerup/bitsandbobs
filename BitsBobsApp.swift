@@ -42,7 +42,7 @@ struct BitsBobsApp: App {
     
     private let currentVersion = 3
     private var modelVersion: Int {
-        2//(UserDefaults.standard.value(forKey: "modelVersion") as? Int) ?? currentVersion
+        (UserDefaults.standard.value(forKey: "modelVersion") as? Int) ?? currentVersion
     }
 
     // Update existing data to new formats
@@ -62,6 +62,7 @@ struct BitsBobsApp: App {
         
         // Save the current version
         UserDefaults.standard.set(currentVersion, forKey: "modelVersion")
+        progress = 1.0
     }
     
     private var loadingView: some View {
