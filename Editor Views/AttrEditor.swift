@@ -232,7 +232,8 @@ struct AttrEditor: View {
                         ForEach(self.presets.indices, id: \.self) { p in
                             TextField("Value", text: Binding(
                                 get: { self.presets[p] },
-                                set: { self.presets[p] = $0; hasChanges = true }))
+                                set: { self.presets[p] = $0; hasChanges = true }
+                            ))
                             .foregroundColor(Color(UIColor.label))
                             .focused($selectedPreset, equals: p)
                         }

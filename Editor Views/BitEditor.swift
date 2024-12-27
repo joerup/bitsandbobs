@@ -50,16 +50,13 @@ struct BitEditor: View {
             self.create = false
             self._name = State(initialValue: bit.name ?? "")
             self._desc = State(initialValue: bit.desc ?? "")
-            self._paragraph = State(initialValue: bit.paragraph ?? "")
+            self._paragraph = State(initialValue: bit.paragraph?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
             self._image = State(initialValue: bit.image != nil ? UIImage(data: bit.image!)! : UIImage())
             self._imageOffset = State(initialValue: bit.imageOffset)
             self._imageScale = State(initialValue: bit.imageScale)
             self._tags = State(initialValue: bit.tags ?? [])
             self._attributes = State(initialValue: bit.attributes ?? [:])
             self._checked = State(initialValue: bit.checked)
-            if paragraph.filter({ $0 != " " }).isEmpty {
-                self.paragraph = ""
-            }
         }
     }
 
@@ -81,6 +78,12 @@ struct BitEditor: View {
                     }
                     .padding(.top, 10)
                     .onChange(of: image) { _ in
+                        hasChanges = true
+                    }
+                    .onChange(of: imageOffset) { _ in
+                        hasChanges = true
+                    }
+                    .onChange(of: imageScale) { _ in
                         hasChanges = true
                     }
                     Spacer()

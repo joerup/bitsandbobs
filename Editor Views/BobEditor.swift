@@ -81,6 +81,12 @@ struct BobEditor: View {
                         .onChange(of: image) { _ in
                             hasChanges = true
                         }
+                        .onChange(of: imageOffset) { _ in
+                            hasChanges = true
+                        }
+                        .onChange(of: imageScale) { _ in
+                            hasChanges = true
+                        }
                         Spacer()
                     }
                 ) { }
